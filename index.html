@@ -1,0 +1,2575 @@
+<!DOCTYPE html>
+<html lang="bn">
+  <head>
+    <script>
+      document.addEventListener("contextmenu", (event) =>
+        event.preventDefault()
+      );
+      document.addEventListener("keydown", (event) => {
+        if (
+          (event.ctrlKey &&
+            ["u", "s", "i", "j"].includes(event.key.toLowerCase())) ||
+          event.key === "F12"
+        ) {
+          event.preventDefault();
+        }
+      });
+    </script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Online Exam</title>
+    <!-- Chart.js CDN -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap");
+
+      body {
+        font-family: "Hind Siliguri", sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .container {
+        font-family: "Hind Siliguri", sans-serif;
+        width: 100%;
+        margin: auto;
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        min-height: 80vh;
+      }
+
+      .exam-content {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      h1 {
+        color: #1b0b54;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      #timer {
+        font-size: 20px;
+        color: #1b0b54;
+        margin-bottom: 5px;
+        font-weight: normal;
+        text-align: center;
+      }
+
+      #exam-info {
+        font-size: 16px;
+        color: black;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      #exam {
+        width: 100%;
+        min-height: 100px;
+      }
+
+      .chart-container {
+        width: 200px;
+        height: 200px;
+        margin: 10px auto;
+        background-color: #f9f9f9;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: none;
+        padding: 10px;
+      }
+
+      .chart-container.visible {
+        display: block;
+      }
+
+      .question-container {
+        text-align: left;
+        margin-bottom: 20px;
+        display: block;
+      }
+
+      .question-label {
+        font-weight: bold;
+        color: #1b0b54;
+        margin-bottom: 10px;
+      }
+
+      .options {
+        margin-top: 10px;
+      }
+
+      .option {
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 5px;
+        text-transform: uppercase;
+      }
+
+      .circle {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid #1b0b54;
+        margin-right: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #1b0b54;
+        font-weight: bold;
+        font-size: 18px;
+      }
+
+      .selected .circle {
+        background-color: #1b0b54;
+        color: white;
+      }
+
+      .correct-text {
+        color: green !important;
+      }
+
+      .incorrect-text {
+        color: #ff0800 !important;
+      }
+
+      .unattempted-text {
+        color: orange !important;
+      }
+
+      #submitBtn {
+        font-family: hind siliguri;
+        padding: 15px 30px;
+        background-color: #1b0b54;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 10px;
+        margin-top: 20px;
+        width: 200px;
+        transition: background-color 0.3s ease;
+      }
+
+      #submitBtn:hover {
+        background-color: #1b0b54;
+      }
+
+      .popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        width: 300px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+        text-align: center;
+        display: none;
+        z-index: 1000;
+        transition: transform 0.5s ease, opacity 0.5s ease;
+      }
+
+      .popup.slide-out {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+      }
+
+      .popup-header {
+        background-color: #1b0b54;
+        color: white;
+        padding: 10px;
+        font-size: 20px;
+        font-weight: bold;
+        border-radius: 10px 10px 0 0;
+      }
+
+      .popup-body {
+        padding: 15px;
+      }
+
+      .popup-body p {
+        margin: 10px 0;
+      }
+
+      .confirm-btn {
+        font-family: hind siliguri;
+        background-color: #34c759;
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        border-radius: 5px;
+        margin: 5px;
+      }
+
+      .confirm-btn:hover {
+        background-color: #34c759;
+      }
+
+      .cancel-btn {
+        background-color: #ff3b30;
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        border-radius: 5px;
+        margin: 5px;
+      }
+
+      .cancel-btn:hover {
+        background-color: #e02b21;
+      }
+
+      .explanation-dropdown {
+        display: none;
+        margin-top: 10px;
+      }
+
+      .explanation-dropdown.visible {
+        display: block;
+      }
+
+      .explanation-btn {
+        background-color: #1b0b54;
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        font-family: "Hind Siliguri", sans-serif;
+        width: 40%;
+        text-align: left;
+        position: relative;
+      }
+
+      .explanation-btn:hover {
+        background-color: #1b0b54;
+      }
+
+      .explanation-btn::after {
+        content: "▼";
+        position: absolute;
+        right: 10px;
+        font-size: 12px;
+      }
+
+      .explanation-btn.active::after {
+        content: "▲";
+      }
+
+      .explanation-content {
+        display: none;
+        padding: 15px;
+        background-color: #f9f9f9;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+        color: #000000;
+        text-align: left;
+        max-height: 450px;
+        overflow-y: auto;
+        margin-top: 5px;
+      }
+
+      .explanation-content.visible {
+        display: block;
+      }
+
+      .explanation-content p {
+        margin: 0 0 10px 0;
+      }
+
+      .explanation-content ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .explanation-content li {
+        margin-bottom: 5px;
+      }
+
+      .explanation-content strong {
+        color: #1b0b54;
+      }
+
+      .explanation-label {
+        font-weight: bold;
+        color: #1b0b54;
+        margin-bottom: 10px;
+        display: block;
+      }
+
+      .locked .option {
+        pointer-events: none;
+        cursor: default;
+      }
+
+      .locked .option.selected {
+        pointer-events: none;
+        cursor: default;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container" id="examContainer">
+      <div class="exam-content">
+        <h1>কেমিস্ট্রি ১ম অনুশীলন</h1>
+        <div id="timer"></div>
+        <div id="exam-info"></div>
+        <div class="chart-container">
+          <canvas id="scoreChart"></canvas>
+        </div>
+        <div id="exam">
+          <!-- Questions will be generated dynamically -->
+        </div>
+        <button id="submitBtn">সাবমিট</button>
+      </div>
+    </div>
+
+    <div class="popup" id="scorePopup">
+      <div class="popup-header">তোমার স্কোর</div>
+      <div class="popup-body">
+        <p><strong>মোট প্রশ্ন:</strong> <span id="totalQuestions"></span></p>
+        <p>
+          <strong>উত্তর দিয়েছো:</strong>
+          <span style="color: #000000" id="answered"></span>
+        </p>
+        <p>
+          <strong>সঠিক উত্তর:</strong>
+          <span style="color: #0ab853" id="correctAnswers"></span>
+        </p>
+        <p>
+          <strong>ভুল উত্তর:</strong>
+          <span style="color: #f81010" id="wrongAnswers"></span>
+        </p>
+        <p>
+          <strong>অনুত্তরিত:</strong>
+          <span style="color: #ffc801" id="unanswered"></span>
+        </p>
+        <p><strong>তোমার চূড়ান্ত স্কোর:</strong></p>
+        <h2 style="color: #1b0b54"><span id="finalScore"></span></h2>
+        <form id="scoreForm" action="https://formspree.io/f/xpby" method="POST">
+          <input type="hidden" name="userID" id="formUserID" />
+          <input type="hidden" name="finalScore" id="formFinalScore" />
+          <input type="hidden" name="correctAnswers" id="formCorrectAnswers" />
+          <input type="hidden" name="wrongAnswers" id="formWrongAnswers" />
+          <input type="hidden" name="unanswered" id="formUnanswered" />
+          <button
+            type="submit"
+            class="confirm-btn"
+            style="background-color: #1b0b54"
+          >
+            <b>ওকে</b>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="popup" id="confirmPopup">
+      <div class="popup-header">কনফার্ম করো</div>
+      <div class="popup-body">
+        <p>
+          ভালো করে দেখে নাও! <br />
+          পরীক্ষা শেষ করতে চাও তো?
+        </p>
+        <button class="confirm-btn" onclick="confirmSubmit()">
+          <b>হ্যাঁ</b>
+        </button>
+        <button class="cancel-btn" onclick="cancelSubmit()"><b>না</b></button>
+      </div>
+    </div>
+
+    <script>
+      let chartInstance = null;
+
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("DOM fully loaded and parsed");
+        const examContainer = document.getElementById("examContainer");
+        if (!examContainer) {
+          console.error("Exam container not found!");
+          return;
+        }
+        try {
+          sessionStorage.setItem("isLoggedIn", "true");
+          sessionStorage.setItem("userID", "anonymous");
+          console.log(
+            "Session storage set: isLoggedIn = true, userID = anonymous"
+          );
+        } catch (e) {
+          console.error("Session storage error:", e);
+        }
+        examContainer.style.display = "block";
+        console.log("Exam container displayed");
+        startTimer();
+        generateQuestions();
+
+        window.addEventListener("beforeunload", function (event) {
+          if (
+            examContainer.style.display === "block" &&
+            sessionStorage.getItem("isLoggedIn") === "true"
+          ) {
+            autoSubmitScore();
+          }
+        });
+      });
+
+      const questions = [
+        {
+          id: 1,
+          question:
+            "নিচের কোন সেটটিতে সম-আয়ন প্রভাব (common-ion effect) বিদ্যমান?",
+          options: {
+            A: "NaCl, CH₃Cl",
+            B: "CaCl₂, C₆H₅Cl",
+            C: "H₂S, HCl",
+            D: "CH₄, HCl",
+          },
+          correct: "C",
+          explanation:
+            "<p>সম-আয়ন প্রভাব হলো এমন একটি ঘটনা যেখানে একটি দুর্বল তড়িৎ বিশ্লেষ্যের (যেমন, H₂S) দ্রবণে এর একটি সমআয়ন (common ion) সম্পন্ন একটি তীব্র তড়িৎ বিশ্লেষ্য (যেমন, HCl, যা H⁺ আয়ন দেয়) যোগ করলে দুর্বল তড়িৎ বিশ্লেষ্যটির বিয়োজন কমে যায় এবং এর দ্রাব্যতা হ্রাস পায়। H₂S একটি দুর্বল অ্যাসিড এবং HCl একটি তীব্র অ্যাসিড। HCl থেকে আসা H⁺ আয়ন H₂S এর বিয়োজনকে দমন করে, যার ফলে সালফাইড আয়নের (S²⁻) ঘনত্ব কমে যায়। এটিই সম-আয়ন প্রভাবের একটি উদাহরণ।</p>",
+        },
+        {
+          id: 2,
+          question:
+            "25°C-এ Zn₃(PO₄)₂ এর দ্রাব্যতা গুণফল প্রকাশক সম্পর্ক কোনটি?",
+          options: {
+            A: "Ksp = [Zn²⁺] × [PO₄³⁻]",
+            B: "Ksp = 6[Zn²⁺] × [PO₄³⁻]",
+            C: "Ksp = [Zn²⁺]³ × [PO₄³⁻]²",
+            D: "Ksp = 108[Zn²⁺]³ × [PO₄³⁻]²",
+          },
+          correct: "C",
+          explanation:
+            "<p>Zn₃(PO₄)₂ একটি স্বল্প দ্রবণীয় লবণ। যখন এটি পানিতে দ্রবীভূত হয়, তখন এটি নিম্নোক্তভাবে বিয়োজিত হয়: <br> Zn₃(PO₄)₂(s) ⇌ 3Zn²⁺(aq) + 2PO₄³⁻(aq) <br> দ্রাব্যতা গুণফল (K<sub>sp</sub>) এর সংজ্ঞা অনুযায়ী, K<sub>sp</sub> = [Zn²⁺]<sup>3</sup> [PO₄³⁻]<sup>2</sup>। এখানে, বিক্রিয়কে বিদ্যমান প্রতিটি আয়নের ঘনত্বের ঘাত হিসেবে সেই আয়নের সহগ ব্যবহৃত হয়।</p>",
+        },
+        {
+          id: 3,
+          question: "নিচের কোনটি সহজেই জলে দ্রবীভূত হয়?",
+          options: {
+            A: "কার্বন",
+            B: "নাইট্রোজেন",
+            C: "আয়োডিন",
+            D: "অ্যামোনিয়া",
+          },
+          correct: "D",
+          explanation:
+            "<p>অ্যামোনিয়া (NH₃) একটি পোলার অণু এবং এটি পানির (H₂O) সাথে হাইড্রোজেন বন্ধন তৈরি করতে পারে। এ কারণে অ্যামোনিয়া পানিতে অত্যন্ত দ্রবণীয়। অন্যদিকে, কার্বন, নাইট্রোজেন এবং আয়োডিন অপোলার বা স্বল্প পোলার প্রকৃতির হওয়ায় পানিতে সহজে দ্রবীভূত হয় না। 'লাইক ডিজলভস লাইক' নীতি অনুসারে, পোলার যৌগ পোলার দ্রাবকে এবং অপোলার যৌগ অপোলার দ্রাবকে দ্রবীভূত হয়।</p>",
+        },
+        {
+          id: 4,
+          question: "নিচের কোন লবণটি পানিতে অদ্রবণীয়?",
+          options: {
+            A: "Na₂SO₄",
+            B: "Al₂(SO₄)₃",
+            C: "CuSO₄",
+            D: "BaSO₄",
+          },
+          correct: "D",
+          explanation:
+            "<p>সাধারণত, অধিকাংশ সালফেট লবণ পানিতে দ্রবণীয়। তবে কিছু ব্যতিক্রম আছে, যেমন ক্যালসিয়াম সালফেট (CaSO₄), স্ট্রনসিয়াম সালফেট (SrSO₄) এবং বেরিয়াম সালফেট (BaSO₄) পানিতে স্বল্প দ্রবণীয় বা অদ্রবণীয়। বেরিয়াম সালফেট (BaSO₄) পানিতে অদ্রবণীয় হওয়ায় এটি সাদা অধঃক্ষেপ তৈরি করে এবং গুণগত বিশ্লেষণে ব্যবহৃত হয়। Na₂SO₄, Al₂(SO₄)₃ এবং CuSO₄ পানিতে সহজেই দ্রবণীয়।</p>",
+        },
+        {
+          id: 5,
+          question:
+            "Ag₂C₂O₄ এর ক্ষেত্রে দ্রাব্যতা (s) ও দ্রাব্যতা গুণফল (Ksp) এর সম্পর্ক কোনটি?",
+          options: {
+            A: "2s²",
+            B: "4s³",
+            C: "s⁴",
+            D: "27s⁴",
+          },
+          correct: "B",
+          explanation:
+            "<p>Ag₂C₂O₄ একটি স্বল্প দ্রবণীয় লবণ, যা পানিতে বিয়োজিত হয়ে Ag⁺ এবং C₂O₄²⁻ আয়ন উৎপন্ন করে। <br> Ag₂C₂O₄(s) ⇌ 2Ag⁺(aq) + C₂O₄²⁻(aq) <br> যদি Ag₂C₂O₄ এর দ্রাব্যতা 's' mol/L হয়, তবে [Ag⁺] = 2s mol/L এবং [C₂O₄²⁻] = s mol/L হবে। <br> অতএব, দ্রাব্যতা গুণফল K<sub>sp</sub> = [Ag⁺]<sup>2</sup> [C₂O₄²⁻] = (2s)<sup>2</sup> (s) = 4s<sup>2</sup> * s = 4s<sup>3</sup>।</p>",
+        },
+        {
+          id: 6,
+          question:
+            "A₂B₃ বা A₃B₂ এর দ্রাব্যতা S হলে এর দ্রাব্যতা গুণফল কত হবে?",
+          options: {
+            A: "108S⁵",
+            B: "27S⁵",
+            C: "16S⁴",
+            D: "8S³",
+          },
+          correct: "A",
+          explanation:
+            "<p>A₂B₃ বা A₃B₂ ধরণের লবণের জন্য (যেমন: Al₂(SO₄)₃), এর বিয়োজন নিম্নরূপ:<br>A₂B₃(s) ⇌ 2A<sup>3+</sup>(aq) + 3B<sup>2-</sup>(aq)<br>যদি দ্রাব্যতা 'S' হয়, তাহলে [A<sup>3+</sup>] = 2S এবং [B<sup>2-</sup>] = 3S হবে।<br>অতএব, দ্রাব্যতা গুণফল K<sub>sp</sub> = [A<sup>3+</sup>]<sup>2</sup> [B<sup>2-</sup>]<sup>3</sup> = (2S)<sup>2</sup> (3S)<sup>3</sup> = 4S<sup>2</sup> * 27S<sup>3</sup> = 108S<sup>5</sup>।<br>একইভাবে A₃B₂ এর ক্ষেত্রেও K<sub>sp</sub> = (3S)<sup>3</sup> (2S)<sup>2</sup> = 27S<sup>3</sup> * 4S<sup>2</sup> = 108S<sup>5</sup> হবে।</p>",
+        },
+        {
+          id: 7,
+          question:
+            "25°C-এ Al₂(SO₄)₃ এর দ্রাব্যতা S হলে, তখন এর আয়নিক গুণফল হবে কোনটি?",
+          options: {
+            A: "S⁵",
+            B: "6S⁵",
+            C: "27S⁵",
+            D: "108S⁵",
+          },
+          correct: "D",
+          explanation:
+            "<p>Al₂(SO₄)₃ একটি আয়নিক যৌগ, যা পানিতে নিম্নোক্তভাবে বিয়োজিত হয়:<br>Al₂(SO₄)₃(s) ⇌ 2Al³⁺(aq) + 3SO₄²⁻(aq)<br>যদি Al₂(SO₄)₃ এর দ্রাব্যতা 'S' mol/L হয়, তবে সাম্যাবস্থায় [Al³⁺] = 2S mol/L এবং [SO₄²⁻] = 3S mol/L হবে।<br>দ্রাব্যতা গুণফল K<sub>sp</sub> = [Al³⁺]<sup>2</sup> [SO₄²⁻]<sup>3</sup>।<br>এখানে, আয়নিক গুণফল (IP) সম্পৃক্ত দ্রবণের দ্রাব্যতা গুণফলের সমান।<br>IP = (2S)<sup>2</sup> (3S)<sup>3</sup> = 4S<sup>2</sup> * 27S<sup>3</sup> = 108S<sup>5</sup>।</p>",
+        },
+        {
+          id: 8,
+          question: "CaC₂O₄ এর দ্রাব্যতা নিম্নোক্ত কোন দ্রবণে বেশি হবে?",
+          options: {
+            A: "0.1 M HCl",
+            B: "0.1 M H₂SO₄",
+            C: "0.1 M NaOH",
+            D: "0.1 M H₂CO₃",
+          },
+          correct: "A",
+          explanation:
+            "<p>CaC₂O₄ একটি স্বল্প দ্রবণীয় লবণ। এর দ্রাব্যতা বৃদ্ধি পাবে যদি এর অ্যানায়ন (C₂O₄²⁻) অন্য কোনো বিক্রিয়ার মাধ্যমে অপসারিত হয়। 0.1 M HCl যোগ করলে, HCl এর H⁺ আয়ন C₂O₄²⁻ এর সাথে বিক্রিয়া করে দুর্বল অ্যাসিড H₂C₂O₄ (অক্সালিক অ্যাসিড) তৈরি করবে। <br> C₂O₄²⁻ + 2H⁺ ⇌ H₂C₂O₄ <br> এই বিক্রিয়ার ফলে দ্রবণে C₂O₄²⁻ আয়নের ঘনত্ব কমে যায়, যা লা-শাতেলিয়ার নীতির (Le Chatelier's principle) সূত্রানুযায়ী CaC₂O₄ এর দ্রাব্যতা বাড়িয়ে দেয়।</p>",
+        },
+        {
+          id: 9,
+          question: "অধঃক্ষেপণের জন্য শর্ত কোনটি?",
+          options: {
+            A: "আয়নিক গুণফল (IP) > Ksp",
+            B: "আয়নিক গুণফল < Ksp",
+            C: "আয়নিক গুণফল (IP) = Ksp",
+            D: "কোনোটিই নয়",
+          },
+          correct: "A",
+          explanation:
+            "<p>কোনো স্বল্প দ্রবণীয় লবণের সম্পৃক্ত দ্রবণে যদি তার আয়নিক গুণফল (Ion Product, IP) দ্রাব্যতা গুণফল (Solubility Product, K<sub>sp</sub>) এর চেয়ে বেশি হয়, তাহলে দ্রবণটি অতিপৃক্ত হয়ে যায় এবং অতিরিক্ত আয়নগুলো কঠিন রূপে অধঃক্ষিপ্ত হয়।<br>IP > K<sub>sp</sub> হলে অধঃক্ষেপ পড়ে।<br>IP < K<sub>sp</sub> হলে দ্রবণটি অসম্পৃক্ত থাকে এবং আরও দ্রবীভূত হতে পারে।<br>IP = K<sub>sp</sub> হলে দ্রবণটি সম্পৃক্ত থাকে এবং সাম্যাবস্থা বজায় থাকে, কোনো অধঃক্ষেপ পড়ে না বা দ্রবীভূত হয় না।</p>",
+        },
+        {
+          id: 10,
+          question: "AgA এর আয়নিক গুণফল নিচের কোনটি?",
+          options: {
+            A: "[A⁺][A⁻]",
+            B: "A⁺B⁻",
+            C: "[A⁺][B⁻]",
+            D: "Ksp",
+          },
+          correct: "A",
+          explanation:
+            "<p>AgA একটি কাল্পনিক লবণ, যা পানিতে বিয়োজিত হয়ে Ag⁺ এবং A⁻ আয়ন উৎপন্ন করে। <br> AgA(s) ⇌ Ag⁺(aq) + A⁻(aq) <br> যেকোনো সময় এই দ্রবণের আয়নিক গুণফল (Ion Product, IP) হলো দ্রবণে উপস্থিত আয়নগুলোর ঘনমাত্রার গুণফল, যেখানে প্রতিটি ঘনমাত্রাকে সেই আয়নের স্টোইচিওমেট্রিক সহগের ঘাতে উন্নীত করা হয়। <br> অতএব, AgA এর আয়নিক গুণফল হবে [Ag⁺][A⁻]। দ্রাব্যতা গুণফল (K<sub>sp</sub>) হলো সম্পৃক্ত দ্রবণের আয়নিক গুণফল।</p>",
+        },
+        {
+          id: 11,
+          question: "কোন যৌগ পানিতে দ্রবণীয় হওয়ার শর্ত কী?",
+          options: {
+            A: "ল্যাটিস এনথালপি > হাইড্রেশন এনথালপি",
+            B: "হাইড্রেশন এনথালপি > ল্যাটিস এনথালপি",
+            C: "হাইড্রেশন এনথালপি = ল্যাটিস এনথালপি",
+            D: "গঠন এনথালপি > বিয়োজন এনথালপি",
+          },
+          correct: "B",
+          explanation:
+            "<p>কোনো আয়নিক যৌগ পানিতে দ্রবীভূত হওয়ার জন্য দুটি শক্তির মধ্যে সম্পর্ক গুরুত্বপূর্ণ: ল্যাটিস এনথালপি (ল্যাটিস শক্তি) এবং হাইড্রেশন এনথালপি (জলীয়করণের শক্তি)। ল্যাটিস এনথালপি হলো আয়নিক যৌগকে গ্যাসীয় আয়নে ভাঙতে প্রয়োজনীয় শক্তি, যা একটি শোষণকারী প্রক্রিয়া। হাইড্রেশন এনথালপি হলো গ্যাসীয় আয়নগুলোকে পানি দ্বারা পরিবেষ্টিত করতে নির্গত শক্তি, যা একটি তাপোৎপাদী প্রক্রিয়া। যখন হাইড্রেশন এনথালপি ল্যাটিস এনথালপির চেয়ে বেশি হয়, তখন যৌগটি পানিতে দ্রবণীয় হয়, কারণ সামগ্রিক শক্তি নির্গত হয় বা শক্তি শোষণের পরিমাণ কম হয়।</p>",
+        },
+        {
+          id: 12,
+          question: "নিচের কোন শর্তাবলিতে গ্যাসসমূহ পানিতে সর্বোচ্চ দ্রবণীয়?",
+          options: {
+            A: "নিম্নচাপ ও নিম্ন তাপমাত্রা",
+            B: "নিম্নচাপ ও উচ্চ তাপমাত্রা",
+            C: "উচ্চচাপ ও নিম্ন তাপমাত্রা",
+            D: "উচ্চচাপ ও উচ্চ তাপমাত্রা",
+          },
+          correct: "C",
+          explanation:
+            "<p>গ্যাসের দ্রাব্যতা তাপমাত্রা এবং চাপের উপর নির্ভরশীল। হেনরির সূত্রানুযায়ী, গ্যাসের দ্রাব্যতা চাপের সাথে সরাসরি সমানুপাতিক। অর্থাৎ, চাপ বাড়লে গ্যাসের দ্রাব্যতা বাড়ে। অন্যদিকে, গ্যাস দ্রবীভূত হওয়ার প্রক্রিয়া সাধারণত তাপোৎপাদী হয়, অর্থাৎ তাপমাত্রা বাড়লে গ্যাসের দ্রাব্যতা কমে যায়। তাই, গ্যাসসমূহ পানিতে সর্বোচ্চ দ্রবণীয় হয় উচ্চচাপ এবং নিম্ন তাপমাত্রায়।</p>",
+        },
+        {
+          id: 13,
+          question: "X₂Y₃ লবণের দ্রাব্যতা গুণফলের একক-",
+          options: {
+            A: "mol⁵/L⁵",
+            B: "mol²/L²",
+            C: "Ksp",
+            D: "mol³/L³",
+          },
+          correct: "A",
+          explanation:
+            "<p>একটি X₂Y₃ ধরণের লবণের বিয়োজন হলো: X₂Y₃(s) ⇌ 2X³⁺(aq) + 3Y²⁻(aq)।<br>যদি দ্রাব্যতা 'S' mol/L হয়, তবে [X³⁺] = 2S mol/L এবং [Y²⁻] = 3S mol/L হবে।<br>K<sub>sp</sub> = [X³⁺]<sup>2</sup> [Y²⁻]<sup>3</sup> = (2S)<sup>2</sup> (3S)<sup>3</sup> = 4S<sup>2</sup> * 27S<sup>3</sup> = 108S<sup>5</sup>।<br>এখানে, S এর একক mol/L।<br>সুতরাং, K<sub>sp</sub> এর একক হবে (mol/L)<sup>5</sup> = mol<sup>5</sup>/L<sup>5</sup>।</p>",
+        },
+        {
+          id: 14,
+          question: "লবণের দ্রাব্যতা গুণফল নির্ণয়ে কোন ধরনের দ্রবণ উপযোগী?",
+          options: {
+            A: "Super saturated",
+            B: "Unsaturated",
+            C: "Saturated",
+            D: "All of them",
+          },
+          correct: "C",
+          explanation:
+            "<p>দ্রাব্যতা গুণফল (K<sub>sp</sub>) শুধুমাত্র **সম্পৃক্ত দ্রবণ** (Saturated solution) এর ক্ষেত্রেই প্রযোজ্য। একটি সম্পৃক্ত দ্রবণ হলো এমন একটি দ্রবণ যেখানে নির্দিষ্ট তাপমাত্রায় একটি দ্রাবকে সর্বোচ্চ পরিমাণ দ্রব দ্রবীভূত থাকে এবং দ্রব ও দ্রাবকের মধ্যে একটি গতিশীল সাম্যাবস্থা বিদ্যমান থাকে। এই সাম্যাবস্থায় আয়নগুলোর ঘনমাত্রার গুণফলই দ্রাব্যতা গুণফল হিসেবে সংজ্ঞায়িত হয়। অসম্পৃক্ত বা অতিপৃক্ত দ্রবণের ক্ষেত্রে দ্রাব্যতা গুণফল প্রযোজ্য নয়।</p>",
+        },
+        {
+          id: 15,
+          question: "দ্রাব্যতা গুণফল নিচের কোন ক্ষেত্রে প্রযোজ্য?",
+          options: {
+            A: "অধিক দ্রবণীয় আয়নিক যৌগ",
+            B: "অধিক দ্রবণীয় সমযোজী যৌগ",
+            C: "স্বল্প দ্রবণীয় আয়নিক যৌগ",
+            D: "স্বল্প দ্রবণীয় সমযোজী যৌগ",
+          },
+          correct: "C",
+          explanation:
+            "<p>দ্রাব্যতা গুণফল (K<sub>sp</sub>) মূলত **স্বল্প দ্রবণীয় আয়নিক যৌগ** এর দ্রাব্যতা পরিমাপের জন্য ব্যবহৃত হয়। এই যৌগগুলো পানিতে খুব কম পরিমাণে দ্রবীভূত হয় এবং একটি নির্দিষ্ট তাপমাত্রায় তাদের আয়নগুলোর মধ্যে সাম্যাবস্থা স্থাপন করে। অধিক দ্রবণীয় আয়নিক যৌগের ক্ষেত্রে সাধারণত K<sub>sp</sub> এর মান অনেক বেশি হয় এবং তাদের দ্রাব্যতা ভিন্ন পদ্ধতিতে পরিমাপ করা হয়। সমযোজী যৌগের ক্ষেত্রে, তারা সাধারণত আয়নে বিয়োজিত হয় না, তাই তাদের জন্য দ্রাব্যতা গুণফল প্রযোজ্য নয়।</p>",
+        },
+        {
+          id: 16,
+          question: "নিচের কোনটি পানিতে দ্রবণীয়?",
+          options: {
+            A: "CaCO₃",
+            B: "ZnCO₃",
+            C: "Pb(NO₃)₂",
+            D: "কোনোটিই নয়",
+          },
+          correct: "C",
+          explanation:
+            "<p>নাইট্রেট লবণগুলো সাধারণত পানিতে দ্রবণীয় হয়। তাই Pb(NO₃)₂ (লেড নাইট্রেট) পানিতে দ্রবণীয়। অপরদিকে, কার্বনেট লবণগুলো সাধারণত পানিতে অদ্রবণীয় বা স্বল্প দ্রবণীয় হয়। যেমন, CaCO₃ (ক্যালসিয়াম কার্বনেট) এবং ZnCO₃ (জিংক কার্বনেট) উভয়ই পানিতে অদ্রবণীয়।</p>",
+        },
+        {
+          id: 17,
+          question:
+            "Al(OH)₃ এর দ্রাব্যতা যদি 'S' হয় তবে এর দ্রাব্যতা গুণফলের মান কোনটি?",
+          options: {
+            A: "S⁴",
+            B: "27S³",
+            C: "27S⁴",
+            D: "27S⁵",
+          },
+          correct: "C",
+          explanation:
+            "<p>Al(OH)₃ একটি স্বল্প দ্রবণীয় যৌগ। এটি পানিতে নিম্নোক্তভাবে বিয়োজিত হয়:<br>Al(OH)₃(s) ⇌ Al³⁺(aq) + 3OH⁻(aq)<br>যদি Al(OH)₃ এর দ্রাব্যতা 'S' mol/L হয়, তাহলে সাম্যাবস্থায় [Al³⁺] = S mol/L এবং [OH⁻] = 3S mol/L হবে।<br>দ্রাব্যতা গুণফল K<sub>sp</sub> = [Al³⁺][OH⁻]<sup>3</sup> = (S)(3S)<sup>3</sup> = S * 27S<sup>3</sup> = 27S<sup>4</sup>।</p>",
+        },
+        {
+          id: 18,
+          question: "Hg₂(NO₃)₂ এর ক্ষেত্রে Ksp এর সঠিক প্রকাশ কোনটি?",
+          options: {
+            A: "[Hg⁺]² × [NO₃⁻]²",
+            B: "[Hg₂²⁺]²[NO₃⁻]²",
+            C: "[Hg₂²⁺][NO₃⁻]²",
+            D: "[Hg₂²⁺]/[NO₃⁻]²",
+          },
+          correct: "C",
+          explanation:
+            "<p>মারকিউরাস নাইট্রেট, Hg₂(NO₃)₂, পানিতে বিয়োজিত হয়ে ডাইমারিক মারকিউরাস আয়ন (Hg₂²⁺) এবং নাইট্রেট আয়ন (NO₃⁻) উৎপন্ন করে।<br>Hg₂(NO₃)₂(s) ⇌ Hg₂²⁺(aq) + 2NO₃⁻(aq)<br>দ্রাব্যতা গুণফল (K<sub>sp</sub>) এর সংজ্ঞা অনুযায়ী, K<sub>sp</sub> = [Hg₂²⁺][NO₃⁻]<sup>2</sup>। এখানে, ডাইমারিক আয়ন Hg₂²⁺ কে একক সত্তা হিসেবে বিবেচনা করা হয়।</p>",
+        },
+        {
+          id: 19,
+          question: "বিশুদ্ধ পানিতে কোন যৌগটি সবচেয়ে বেশি দ্রবণীয়?",
+          options: {
+            A: "CaF₂; (Ksp = 4.0 × 10⁻¹¹)",
+            B: "Ag₂S; (Ksp = 1.6 × 10⁻⁴⁹)",
+            C: "Ag₃PO₄; (Ksp = 1.8 × 10⁻¹⁸)",
+            D: "Al(OH)₃; (Ksp = 2.0 × 10⁻³²)",
+          },
+          correct: "A",
+          explanation:
+            "<p>যৌগের দ্রাব্যতা (S) এবং দ্রাব্যতা গুণফল (K<sub>sp</sub>) এর সম্পর্ক থেকে দ্রাব্যতা নির্ণয় করে কোনটি সবচেয়ে বেশি দ্রবণীয় তা বলা যায়।<br>• CaF₂: K<sub>sp</sub> = [Ca²⁺][F⁻]<sup>2</sup> = (S)(2S)<sup>2</sup> = 4S<sup>3</sup>।<br>  S = (K<sub>sp</sub>/4)<sup>1/3</sup> = (4.0 × 10⁻¹¹ / 4)<sup>1/3</sup> = (1.0 × 10⁻¹¹)<sup>1/3</sup> ≈ 2.15 × 10⁻⁴ M<br>• Ag₂S: K<sub>sp</sub> = [Ag⁺]<sup>2</sup>[S²⁻] = (2S)<sup>2</sup>(S) = 4S<sup>3</sup>।<br>  S = (K<sub>sp</sub>/4)<sup>1/3</sup> = (1.6 × 10⁻⁴⁹ / 4)<sup>1/3</sup> = (4.0 × 10⁻⁵⁰)<sup>1/3</sup> ≈ 3.42 × 10⁻¹⁷ M<br>• Ag₃PO₄: K<sub>sp</sub> = [Ag⁺]<sup>3</sup>[PO₄³⁻] = (3S)<sup>3</sup>(S) = 27S<sup>4</sup>।<br>  S = (K<sub>sp</sub>/27)<sup>1/4</sup> = (1.8 × 10⁻¹⁸ / 27)<sup>1/4</sup> = (6.67 × 10⁻²⁰)<sup>1/4</sup> ≈ 5.08 × 10⁻⁶ M<br>• Al(OH)₃: K<sub>sp</sub> = [Al³⁺][OH⁻]<sup>3</sup> = (S)(3S)<sup>3</sup> = 27S<sup>4</sup>।<br>  S = (K<sub>sp</sub>/27)<sup>1/4</sup> = (2.0 × 10⁻³² / 27)<sup>1/4</sup> = (7.41 × 10⁻³⁴)<sup>1/4</sup> ≈ 2.94 × 10⁻⁹ M<br>প্রাপ্ত দ্রাব্যতাগুলো তুলনা করলে দেখা যায়, CaF₂ এর দ্রাব্যতা (2.15 × 10⁻⁴ M) অন্যান্য যৌগগুলোর চেয়ে বেশি।</p>",
+        },
+        {
+          id: 20,
+          question: "ক্যালসিয়াম ফসফেটের দ্রাব্যতা গুণফল কোনটি?",
+          options: {
+            A: "27S³",
+            B: "S⁵",
+            C: "27S⁵",
+            D: "108S⁵",
+          },
+          correct: "D",
+          explanation:
+            "<p>ক্যালসিয়াম ফসফেট এর সংকেত হলো Ca₃(PO₄)₂। এটি পানিতে বিয়োজিত হয়ে Ca²⁺ এবং PO₄³⁻ আয়ন উৎপন্ন করে। <br> Ca₃(PO₄)₂(s) ⇌ 3Ca²⁺(aq) + 2PO₄³⁻(aq) <br> যদি Ca₃(PO₄)₂ এর দ্রাব্যতা 'S' mol/L হয়, তাহলে সাম্যাবস্থায় [Ca²⁺] = 3S mol/L এবং [PO₄³⁻] = 2S mol/L হবে। <br> দ্রাব্যতা গুণফল K<sub>sp</sub> = [Ca²⁺]<sup>3</sup> [PO₄³⁻]<sup>2</sup> = (3S)<sup>3</sup> (2S)<sup>2</sup> = 27S<sup>3</sup> * 4S<sup>2</sup> = 108S<sup>5</sup>।</p>",
+        },
+        {
+          id: 21,
+          question: "MX₂ এর দ্রাব্যতা গুণফল কোনটি?",
+          options: {
+            A: "[M²⁺] × [X⁻]²",
+            B: "[M²⁺]² × [X⁻]",
+            C: "[M²⁺] × [X⁻²]",
+            D: "[M²⁺] × [X⁻]²",
+          },
+          correct: "A",
+          explanation:
+            "<p>MX₂ হলো একটি স্বল্প দ্রবণীয় লবণ, যা পানিতে বিয়োজিত হয়ে M²⁺ এবং X⁻ আয়ন উৎপন্ন করে। <br> MX₂(s) ⇌ M²⁺(aq) + 2X⁻(aq) <br> দ্রাব্যতা গুণফল (K<sub>sp</sub>) এর সংজ্ঞা অনুযায়ী, এটি দ্রবণে উপস্থিত আয়নগুলোর ঘনমাত্রার গুণফল, যেখানে প্রতিটি ঘনমাত্রাকে সেই আয়নের স্টোইচিওমেট্রিক সহগের ঘাতে উন্নীত করা হয়। <br> অতএব, MX₂ এর দ্রাব্যতা গুণফল হবে K<sub>sp</sub> = [M²⁺][X⁻]<sup>2</sup>।</p>",
+        },
+        {
+          id: 22,
+          question: "ম্যাগনেশিয়াম ফসফেট এর দ্রাব্যতা গুণফল কোনটি?",
+          options: {
+            A: "[Mg²⁺] × [PO₄³⁻]²",
+            B: "[Mg²⁺]² × [PO₄³⁻]³",
+            C: "[Mg²⁺]² × [PO₄³⁻]",
+            D: "[Mg²⁺]³ × [PO₄³⁻]²",
+          },
+          correct: "D",
+          explanation:
+            "<p>ম্যাগনেশিয়াম ফসফেট এর সংকেত হলো Mg₃(PO₄)₂। এটি পানিতে বিয়োজিত হয়ে Mg²⁺ এবং PO₄³⁻ আয়ন উৎপন্ন করে। <br> Mg₃(PO₄)₂(s) ⇌ 3Mg²⁺(aq) + 2PO₄³⁻(aq) <br> দ্রাব্যতা গুণফল (K<sub>sp</sub>) এর সংজ্ঞা অনুযায়ী, এটি দ্রবণে উপস্থিত আয়নগুলোর ঘনমাত্রার গুণফল, যেখানে প্রতিটি ঘনমাত্রাকে সেই আয়নের স্টোইচিওমেট্রিক সহগের ঘাতে উন্নীত করা হয়। <br> অতএব, ম্যাগনেশিয়াম ফসফেট এর দ্রাব্যতা গুণফল হবে K<sub>sp</sub> = [Mg²⁺]<sup>3</sup> [PO₄³⁻]<sup>2</sup>।</p>",
+        },
+        {
+          id: 23,
+          question: "একটি আদর্শ দ্রবণ হলো সেই দ্রবণ যাতে-",
+          options: {
+            A: "আন্তঃআণবিক আকর্ষণ খুব বেশি",
+            B: "তুলনামূলকভাবে দ্রাবকের পরিমাণ খুব বেশি",
+            C: "দ্রবণে কণাসমূহের মধ্যে কোন প্রতিক্রিয়া নেই",
+            D: "দ্রবণে দ্রবের কণার সংখ্যা তুলনামূলকভাবে কম",
+          },
+          correct: "C",
+          explanation:
+            "<p>একটি **আদর্শ দ্রবণ** (Ideal solution) হলো এমন একটি দ্রবণ যা রাউল্টের সূত্র (Raoult's Law) মেনে চলে এবং যেখানে দ্রব ও দ্রাবকের কণাগুলোর মধ্যে আন্তঃআণবিক আকর্ষণ বল, দ্রব-দ্রব বা দ্রাবক-দ্রাবক কণাগুলোর আকর্ষণ বলের সমান হয়। এর অর্থ হলো, আদর্শ দ্রবণে কণাগুলোর মধ্যে কোনো উল্লেখযোগ্য মিথস্ক্রিয়া বা তাপীয় পরিবর্তন (এনথালপি পরিবর্তন) হয় না। অর্থাৎ, দ্রবণে কণাসমূহের মধ্যে কোন বাড়তি প্রতিক্রিয়া নেই।</p>",
+        },
+        {
+          id: 24,
+          question:
+            "একটি বিকারের পরিষ্কার দ্রবণের মধ্যে দ্রবের একটি স্ফটিক যোগ করা হলো। বিকারের তলদেশে স্ফটিকটি অপরিবর্তিত থাকলে দ্রবণটি কোন ধরনের?",
+          options: {
+            A: "সম্পৃক্ত দ্রবণ",
+            B: "ইমালশন",
+            C: "অসম্পৃক্ত দ্রবণ",
+            D: "অতিপৃক্ত দ্রবণ",
+          },
+          correct: "A",
+          explanation:
+            "<p>যখন একটি **সম্পৃক্ত দ্রবণ** (Saturated solution) এ অতিরিক্ত দ্রব যোগ করা হয়, তখন অতিরিক্ত দ্রব আর দ্রবীভূত হয় না এবং তা বিকারের তলদেশে কঠিন রূপে জমা থাকে বা অপরিবর্তিত থাকে। এটি নির্দেশ করে যে দ্রবণটি ইতিমধ্যে নির্দিষ্ট তাপমাত্রায় সর্বোচ্চ পরিমাণ দ্রব দ্রবীভূত করেছে এবং একটি গতিশীল সাম্যাবস্থায় পৌঁছেছে। অসম্পৃক্ত দ্রবণে আরও দ্রব দ্রবীভূত হতে পারে, এবং অতিপৃক্ত দ্রবণ অস্থায়ীভাবে অতিরিক্ত দ্রব ধারণ করে।</p>",
+        },
+        {
+          id: 25,
+          question: "কোনটি পানিতে অদ্রবণীয়?",
+          options: {
+            A: "CaCl₂",
+            B: "CaBr₂",
+            C: "CaI₂",
+            D: "CaF₂",
+          },
+          correct: "D",
+          explanation:
+            "<p>ক্যালসিয়ামের হ্যালাইড লবণগুলোর মধ্যে, ক্যালসিয়াম ফ্লোরাইড (CaF₂) পানিতে **অদ্রবণীয়** বা স্বল্প দ্রবণীয়। এর কারণ হলো CaF₂ এর ল্যাটিস শক্তি তুলনামূলকভাবে বেশি এবং হাইড্রেশন শক্তি কম। অন্যদিকে, ক্যালসিয়াম ক্লোরাইড (CaCl₂), ক্যালসিয়াম ব্রোমাইড (CaBr₂) এবং ক্যালসিয়াম আয়োডাইড (CaI₂) পানিতে সহজেই দ্রবণীয়। ফ্লোরাইড আয়নের আকার ছোট হওয়ায় এটি তুলনামূলকভাবে শক্তিশালী ল্যাটিস গঠন করে, যা পানিতে দ্রবীভূত হওয়া কঠিন করে তোলে।</p>",
+        },
+        {
+          id: 26,
+          question:
+            "স্বল্পদ্রাব্য লবণের সম্পৃক্ত দ্রবণে ঐ লবণের কোন একটি সমআয়ন সম্পন্ন তীব্র তড়িৎ বিশ্লেষ্য যোগ করলে, স্বল্পদ্রাব্য লবণের-",
+          options: {
+            A: "দ্রাব্যতা গুণফল বেড়ে যাবে",
+            B: "দ্রাব্যতা কমে যাবে",
+            C: "দ্রাব্যতা গুণফল কমে যাবে",
+            D: "দ্রাব্যতা বেড়ে যাবে",
+          },
+          correct: "B",
+          explanation:
+            "<p>**সম-আয়ন প্রভাব** (Common-ion effect) এর কারণে স্বল্প দ্রাব্য লবণের সম্পৃক্ত দ্রবণে ঐ লবণের একটি সমআয়ন সম্পন্ন তীব্র তড়িৎ বিশ্লেষ্য যোগ করলে, স্বল্প দ্রাব্য লবণের দ্রাব্যতা **কমে যাবে**। এর কারণ হলো, তীব্র তড়িৎ বিশ্লেষ্য থেকে অতিরিক্ত সমআয়ন আসার ফলে লা-শাতেলিয়ার নীতির (Le Chatelier's principle) সূত্রানুযায়ী স্বল্প দ্রাব্য লবণের বিয়োজন সাম্যাবস্থা বামদিকে সরে যায়, যার ফলে কঠিন লবণের অধঃক্ষেপ পড়ে এবং দ্রবণে আয়নের ঘনত্ব কমে যায়। দ্রাব্যতা গুণফল (K<sub>sp</sub>) তাপমাত্রার উপর নির্ভরশীল এবং সমআয়ন যোগ করলে এর মান পরিবর্তিত হয় না, কেবল দ্রাব্যতা প্রভাবিত হয়।</p>",
+        },
+        {
+          id: 27,
+          question: "দ্রাব্যতা নীতিতে কোনটি সঠিক?",
+          options: {
+            A: "Ksp = √S",
+            B: "S = √Ksp",
+            C: "S = Ksp²",
+            D: "Ksp = S",
+          },
+          correct: "B",
+          explanation:
+            "<p>যদি কোনো 1:1 প্রকারের স্বল্প দ্রবণীয় লবণ যেমন AB এর বিয়োজন: AB(s) ⇌ A⁺(aq) + B⁻(aq) হয়, এবং এর দ্রাব্যতা 'S' mol/L হয়, তাহলে সাম্যাবস্থায় [A⁺] = S এবং [B⁻] = S হবে।<br>এক্ষেত্রে দ্রাব্যতা গুণফল K<sub>sp</sub> = [A⁺][B⁻] = (S)(S) = S²।<br>এই সম্পর্ক থেকে দ্রাব্যতা (S) নির্ণয় করা যায়: S = √K<sub>sp</sub>।<br>এই সম্পর্কটি 1:1 প্রকারের লবণের জন্য সঠিক। অন্যান্য প্রকারের লবণের জন্য সম্পর্ক ভিন্ন হতে পারে, তবে প্রশ্নে সাধারণ দ্রাব্যতা নীতির কথা বলা হয়েছে, যা অধিকাংশ ক্ষেত্রে এই 1:1 সম্পর্ককে বোঝায়।</p>",
+        },
+        {
+          id: 28,
+          question: "Al₂(SO₄)₃ এর দ্রাব্যতার গুণফলের একক কোনটি?",
+          options: {
+            A: "mol⁵/L⁵",
+            B: "mol⁴/L⁴",
+            C: "mol³/L³",
+            D: "mol²/L²",
+          },
+          correct: "A",
+          explanation:
+            "<p>Al₂(SO₄)₃ একটি আয়নিক যৌগ, যা পানিতে নিম্নোক্তভাবে বিয়োজিত হয়:<br>Al₂(SO₄)₃(s) ⇌ 2Al³⁺(aq) + 3SO₄²⁻(aq)<br>যদি Al₂(SO₄)₃ এর দ্রাব্যতা 'S' mol/L হয়, তাহলে সাম্যাবস্থায় [Al³⁺] = 2S mol/L এবং [SO₄²⁻] = 3S mol/L হবে।<br>দ্রাব্যতা গুণফল K<sub>sp</sub> = [Al³⁺]<sup>2</sup> [SO₄²⁻]<sup>3</sup> = (2S)<sup>2</sup> (3S)<sup>3</sup> = 4S<sup>2</sup> * 27S<sup>3</sup> = 108S<sup>5</sup>।<br>এখানে, S এর একক mol/L। সুতরাং, K<sub>sp</sub> এর একক হবে (mol/L)<sup>5</sup> বা mol<sup>5</sup>/L<sup>5</sup>।</p>",
+        },
+        {
+          id: 29,
+          question:
+            "আয়নিক যৌগসমূহ পানিতে দ্রবীভূত হওয়ার সময় যে শক্তি নির্গত হয় তাকে কী বলে?",
+          options: {
+            A: "দ্রবণ শক্তি",
+            B: "হাইড্রেশন শক্তি",
+            C: "আয়নীকরণ শক্তি",
+            D: "ইলেকট্রন শক্তি",
+          },
+          correct: "B",
+          explanation:
+            "<p>আয়নিক যৌগসমূহ যখন পানিতে দ্রবীভূত হয়, তখন তাদের আয়নগুলো পানির অণু দ্বারা পরিবেষ্টিত হয়। এই প্রক্রিয়াটিকে **হাইড্রেশন** (Hydration) বা জলীয়করণ বলে। হাইড্রেশন প্রক্রিয়ার সময় আয়ন এবং পানির অণুগুলোর মধ্যে আকর্ষণ বলের সৃষ্টি হয় এবং এর ফলে যে শক্তি নির্গত হয়, তাকে **হাইড্রেশন শক্তি** (Hydration energy) বা জলীয়করণের এনথালপি বলে। এই শক্তি নির্গত হয় বলেই অনেক আয়নিক যৌগ পানিতে দ্রবীভূত হতে পারে।</p>",
+        },
+        {
+          id: 30,
+          question: "নিচের কোনটি শিখা পরীক্ষায় বেগুনী বর্ণ দেয়?",
+          options: {
+            A: "K⁺",
+            B: "Al³⁺",
+            C: "Ni²⁺",
+            D: "Na⁺",
+          },
+          correct: "A",
+          explanation:
+            "<p>শিখা পরীক্ষায় বিভিন্ন ধাতব আয়ন নির্দিষ্ট বর্ণ প্রদর্শন করে। **পটাশিয়াম আয়ন (K⁺)** শিখা পরীক্ষায় **বেগুনী বর্ণ** দেয়। এই বেগুনী বর্ণ সোডিয়ামের উজ্জ্বল সোনালী হলুদ বর্ণের উপস্থিতিতে অনেক সময় ঢাকা পড়ে যায়, তাই কোবাল্ট গ্লাস ব্যবহার করে সোডিয়ামের বর্ণ শোষণ করে পটাশিয়ামের বেগুনী বর্ণ দেখা হয়। সোডিয়াম আয়ন (Na⁺) সোনালী হলুদ, ক্যালসিয়াম আয়ন (Ca²⁺) ইটের মতো লাল, এবং কপার আয়ন (Cu²⁺) নীলাভ-সবুজ বর্ণ দেয়।</p>",
+        },
+        {
+          id: 31,
+          question:
+            "নিচের কোনটি 'Flame test' এ 'Golden yellow' প্রতীয়মান হয়?",
+          options: {
+            A: "Cu",
+            B: "K",
+            C: "Na",
+            D: "Ca",
+          },
+          correct: "C",
+          explanation:
+            "<p>শিখা পরীক্ষায় বিভিন্ন ধাতব আয়ন তাদের বৈশিষ্ট্যমূলক বর্ণ দেখায়। **সোডিয়াম (Na) আয়ন** শিখা পরীক্ষায় **উজ্জ্বল সোনালী হলুদ** (Golden yellow) বর্ণ প্রদর্শন করে। এটি শিখা পরীক্ষার একটি অত্যন্ত পরিচিত বৈশিষ্ট্য। কপার (Cu) নীলাভ-সবুজ, পটাশিয়াম (K) বেগুনী এবং ক্যালসিয়াম (Ca) ইটের মতো লাল বর্ণ দেয়।</p>",
+        },
+        {
+          id: 32,
+          question: "নিচের কোন আয়নটি শিখা পরীক্ষায় নীলাভ-সবুজ বর্ণ দেখায়?",
+          options: {
+            A: "K",
+            B: "Ca",
+            C: "Ba",
+            D: "Cu",
+          },
+          correct: "D",
+          explanation:
+            "<p>শিখা পরীক্ষায় **কপার (Cu) আয়ন** **নীলাভ-সবুজ** বর্ণ দেখায়। এটি কপারের একটি বৈশিষ্ট্যমূলক শনাক্তকরণ পরীক্ষা। পটাশিয়াম (K) বেগুনী, ক্যালসিয়াম (Ca) ইটের মতো লাল এবং বেরিয়াম (Ba) হলুদাভ-সবুজ বর্ণ দেয়।</p>",
+        },
+        {
+          id: 33,
+          question:
+            "কোবাল্ট কাচের ভিতর দিয়ে ক্যালসিয়ামের শিখা দেখতে কেমন হয়?",
+          options: {
+            A: "ইটের মত লাল",
+            B: "গাঢ় লাল",
+            C: "হালকা সবুজ",
+            D: "নীলাভ সবুজ",
+          },
+          correct: "C",
+          explanation:
+            "<p>ক্যালসিয়াম (Ca) সাধারণত শিখা পরীক্ষায় ইটের মতো লাল বর্ণ দেখায়। কিন্তু এই বর্ণ সোডিয়ামের উজ্জ্বল সোনালী হলুদ বর্ণ দ্বারা প্রভাবিত হতে পারে। কোবাল্ট কাচ ব্যবহার করলে এটি সোডিয়ামের সোনালী হলুদ বর্ণ শোষণ করে নেয়। কোবাল্ট কাচের ভিতর দিয়ে ক্যালসিয়ামের শিখা হালকা সবুজ দেখায়। এটি ক্যালসিয়াম আয়নের একটি গুরুত্বপূর্ণ বৈশিষ্ট্য, যা অন্য কোনো আয়নের সাথে এর বর্ণকে আলাদা করতে সাহায্য করে।</p>",
+        },
+        {
+          id: 34,
+          question: "নিম্নের কোন মৌল লালচে বেগুনি শিখা সৃষ্টি করে?",
+          options: {
+            A: "বেরিয়াম",
+            B: "সিজিয়াম",
+            C: "লিথিয়াম",
+            D: "রুবিডিয়াম",
+          },
+          correct: "D",
+          explanation:
+            "<p>শিখা পরীক্ষায় বিভিন্ন ক্ষার ধাতু এবং ক্ষারীয় মৃত্তিকা ধাতু তাদের বৈশিষ্ট্যমূলক বর্ণ দেখায়। **রুবিডিয়াম (Rb)** শিখা পরীক্ষায় **লালচে বেগুনি** বা গাঢ় লালচে বেগুনী বর্ণ সৃষ্টি করে। লিথিয়াম (Li) ক্রিমসন লাল, সোডিয়াম (Na) সোনালী হলুদ, পটাশিয়াম (K) হালকা বেগুনী, এবং সিজিয়াম (Cs) নীলাভ-বেগুনি বর্ণ দেয়।</p>",
+        },
+        {
+          id: 35,
+          question: "শিখা পরীক্ষায় কোন মৌলটি বর্ণ দেখায়?",
+          options: {
+            A: "Be",
+            B: "K",
+            C: "Mg",
+            D: "Zn",
+          },
+          correct: "B",
+          explanation:
+            "<p>শিখা পরীক্ষায় সাধারণত ক্ষার ধাতু ও ক্ষারীয় মৃত্তিকা ধাতুসমূহ বর্ণ দেখায়, কারণ তাদের বহিঃস্থ ইলেকট্রন কম শক্তি শোষণ করে উত্তেজিত অবস্থায় যায় এবং ফিরে আসার সময় দৃশ্যমান আলোর তরঙ্গদৈর্ঘ্যের ফোটন নির্গত করে। **পটাশিয়াম (K)** শিখা পরীক্ষায় **বেগুনী বর্ণ** দেখায়। অপরদিকে, বেরিলিয়াম (Be), ম্যাগনেসিয়াম (Mg) এবং জিংক (Zn) শিখা পরীক্ষায় দৃশ্যমান কোনো বর্ণ দেখায় না, কারণ তাদের ইলেকট্রন উত্তেজিত হওয়ার জন্য বেশি শক্তির প্রয়োজন হয় এবং যে ফোটন নির্গত হয় তা দৃশ্যমান অঞ্চলের বাইরে পড়ে।</p>",
+        },
+        {
+          id: 36,
+          question: "কোনটি শিখা পরীক্ষা দেয় না?",
+          options: {
+            A: "Na",
+            B: "Be",
+            C: "K",
+            D: "Ca",
+          },
+          correct: "B",
+          explanation:
+            "<p>শিখা পরীক্ষায় সাধারণত ক্ষার ধাতু ও ক্ষারীয় মৃত্তিকা ধাতুসমূহের মধ্যে কেবল বেরিলিয়াম (Be) এবং ম্যাগনেসিয়াম (Mg) কোনো দৃশ্যমান বর্ণ প্রদর্শন করে না। এর কারণ হলো, এই মৌলগুলোর পরমাণুতে ইলেকট্রনগুলো দৃঢ়ভাবে নিউক্লিয়াস দ্বারা আবদ্ধ থাকে। ফলে শিখার তাপশক্তি দ্বারা তাদের ইলেকট্রনগুলোকে সহজে উত্তেজিত করে উচ্চ শক্তিস্তরে নেওয়া যায় না, অথবা উত্তেজিত হলেও তারা যে আলো বিকিরণ করে তা দৃশ্যমান অঞ্চলের বাইরে হয়। তাই **বেরিলিয়াম (Be)** শিখা পরীক্ষা দেয় না।</p>",
+        },
+        {
+          id: 37,
+          question: "নিচের কোন ধাতু শিখা পরীক্ষায় হলুদাভ সবুজ বর্ণ দেখায়?",
+          options: {
+            A: "Ca",
+            B: "Ba",
+            C: "Na",
+            D: "K",
+          },
+          correct: "B",
+          explanation:
+            "<p>শিখা পরীক্ষায় বিভিন্ন ধাতু তাদের বৈশিষ্ট্যপূর্ণ বর্ণ প্রদর্শন করে। **বেরিয়াম (Ba) আয়ন** শিখা পরীক্ষায় **হলুদাভ সবুজ** বর্ণ দেখায়। ক্যালসিয়াম (Ca) ইটের মতো লাল, সোডিয়াম (Na) সোনালী হলুদ এবং পটাশিয়াম (K) বেগুনী বর্ণ দেয়।</p>",
+        },
+        {
+          id: 38,
+          question: "শিখা পরীক্ষায় ইটের মতো লাল শিখা সৃষ্টি করে কোনটি?",
+          options: {
+            A: "K⁺",
+            B: "Cu²⁺",
+            C: "Na⁺",
+            D: "Ca²⁺",
+          },
+          correct: "D",
+          explanation:
+            "<p>শিখা পরীক্ষায় **ক্যালসিয়াম আয়ন (Ca²⁺)** **ইটের মতো লাল** বর্ণ প্রদর্শন করে। এটি ক্যালসিয়াম শনাক্তকরণের একটি গুরুত্বপূর্ণ পরীক্ষা। পটাশিয়াম আয়ন (K⁺) বেগুনী, কপার আয়ন (Cu²⁺) নীলাভ-সবুজ এবং সোডিয়াম আয়ন (Na⁺) সোনালী হলুদ বর্ণ দেয়।</p>",
+        },
+        {
+          id: 39,
+          question:
+            "শিখা পরীক্ষায় কোন আয়নটির বর্ণালি কোবাল্ট কাচের মধ্যে দিয়ে হালকা সবুজ দেখায়?",
+          options: {
+            A: "Cu²⁺",
+            B: "Fe²⁺",
+            C: "Zn²⁺",
+            D: "Ca²⁺",
+          },
+          correct: "D",
+          explanation:
+            "<p>ক্যালসিয়াম আয়ন (Ca²⁺) সাধারণত শিখা পরীক্ষায় ইটের মতো লাল বর্ণ দেয়। তবে সোডিয়াম আয়নের উপস্থিতিতে এই বর্ণ ঢাকা পড়ে যেতে পারে। কোবাল্ট কাচ (বা নীল কাচ) ব্যবহার করলে সোডিয়ামের তীব্র সোনালী হলুদ বর্ণ শোষণ হয়ে যায় এবং তখন ক্যালসিয়াম আয়নের **হালকা সবুজ** বর্ণ দেখা যায়। এটি ক্যালসিয়াম আয়ন শনাক্তকরণের একটি বিশেষ পদ্ধতি।</p>",
+        },
+        {
+          id: 40,
+          question:
+            "ব্লু-গ্লাসের মধ্য দিয়ে গোলাপি লাল বর্ণের বর্ণালি দেখায় কোন ক্যাটায়ন?",
+          options: {
+            A: "Na⁺",
+            B: "K⁺",
+            C: "Ca²⁺",
+            D: "Cu²⁺",
+          },
+          correct: "B",
+          explanation:
+            "<p>**পটাশিয়াম আয়ন (K⁺)** শিখা পরীক্ষায় সাধারণত বেগুনী বর্ণ দেয়, যা সোডিয়ামের সোনালী হলুদ বর্ণের কারণে অনেক সময় ভালোভাবে বোঝা যায় না। কোবাল্ট ব্লু-গ্লাস (নীল কাচ) সোডিয়ামের সোনালী হলুদ বর্ণ শোষণ করে নেয়। এর ফলে ব্লু-গ্লাসের মধ্য দিয়ে পটাশিয়ামের **গোলাপি লাল** বা বেগুনি বর্ণালি স্পষ্টভাবে দেখা যায়।</p>",
+        },
+        {
+          id: 41,
+          question:
+            "শিখা পরীক্ষায় ব্যবহৃত কোবাল্ট ব্লু-গ্লাস (বা নীল কাচ) কোন আলো সম্পূর্ণ শোষণ করে?",
+          options: {
+            A: "হালকা বেগুনি",
+            B: "সোনালী হলুদ",
+            C: "নীলাভ সবুজ",
+            D: "গোলাপী লাল",
+          },
+          correct: "B",
+          explanation:
+            "<p>শিখা পরীক্ষায় যখন একাধিক ধাতব আয়ন উপস্থিত থাকে, তখন তাদের বর্ণ একে অপরের সাথে মিশে যেতে পারে বা একটি শক্তিশালী বর্ণ অন্যটিকে ঢেকে দিতে পারে। সোডিয়াম আয়নের **সোনালী হলুদ** বর্ণ অত্যন্ত উজ্জ্বল এবং প্রায়শই অন্যান্য দুর্বল বর্ণকে ঢেকে দেয়। এই সমস্যা সমাধানের জন্য **কোবাল্ট ব্লু-গ্লাস (নীল কাচ)** ব্যবহার করা হয়। এই কাচটি সোডিয়ামের সোনালী হলুদ বর্ণ সম্পূর্ণ শোষণ করে নেয়, ফলে অন্যান্য আয়নের বৈশিষ্ট্যমূলক বর্ণ (যেমন পটাশিয়ামের বেগুনী বা ক্যালসিয়ামের হালকা সবুজ) দেখা সহজ হয়।</p>",
+        },
+        {
+          id: 42,
+          question: "দীপ শিখায় নীল কাচের মধ্য দিয়ে Na এর বর্ণ কিরূপ?",
+          options: {
+            A: "সোনালি",
+            B: "উজ্জ্বল সোনালি",
+            C: "বেগুনি",
+            D: "বর্ণহীন",
+          },
+          correct: "D",
+          explanation:
+            "<p>সোডিয়াম (Na) শিখা পরীক্ষায় উজ্জ্বল সোনালী হলুদ বর্ণ দেখায়। তবে, যখন এই শিখাটিকে নীল কাচের মধ্য দিয়ে দেখা হয়, তখন **নীল কাচ সোডিয়ামের সোনালী হলুদ আলো সম্পূর্ণরূপে শোষণ করে নেয়**। এর ফলে, নীল কাচের মধ্য দিয়ে সোডিয়ামের শিখা **বর্ণহীন** বা প্রায় অদৃশ্য দেখায়। এটি কোবাল্ট কাচের একটি গুরুত্বপূর্ণ ব্যবহার যা সোডিয়ামের তীব্র বর্ণকে বাদ দিয়ে অন্যান্য ধাতুর বর্ণালি দেখতে সাহায্য করে।</p>",
+        },
+        {
+          id: 43,
+          question: "শিখা পরীক্ষায় হলুদাভ সবুজ রং দিলে লবণটিতে উপস্থিত-",
+          options: {
+            A: "Calcium",
+            B: "Potassium",
+            C: "Barium",
+            D: "Sodium",
+          },
+          correct: "C",
+          explanation:
+            "<p>শিখা পরীক্ষায় বিভিন্ন ধাতব আয়ন তাদের বৈশিষ্ট্যমূলক বর্ণ দেখায়। যদি শিখায় **হলুদাভ সবুজ** রং দেখা যায়, তবে এটি নির্দেশ করে যে লবণটিতে **বেরিয়াম (Barium)** আয়ন (Ba²⁺) উপস্থিত রয়েছে। ক্যালসিয়াম (Calcium) ইটের মতো লাল, পটাশিয়াম (Potassium) বেগুনী, এবং সোডিয়াম (Sodium) সোনালী হলুদ বর্ণ দেয়।</p>",
+        },
+        {
+          id: 44,
+          question:
+            "নিচের কোনটি শিখা পরীক্ষায় (Flame test) বর্ণ প্রদান করে না?",
+          options: {
+            A: "K⁺",
+            B: "Ca²⁺",
+            C: "Cu²⁺",
+            D: "Mg²⁺",
+          },
+          correct: "D",
+          explanation:
+            "<p>শিখা পরীক্ষায় সাধারণত ক্ষার ধাতু ও ক্ষারীয় মৃত্তিকা ধাতুসমূহ বর্ণ দেখায়। তবে, **ম্যাগনেসিয়াম আয়ন (Mg²⁺)** শিখা পরীক্ষায় কোনো দৃশ্যমান বর্ণ প্রদান করে না। এর কারণ হলো ম্যাগনেসিয়ামের ইলেকট্রনগুলো নিউক্লিয়াস দ্বারা অপেক্ষাকৃত দৃঢ়ভাবে আবদ্ধ থাকে এবং শিখার তাপশক্তি দ্বারা সহজে উত্তেজিত হতে পারে না, অথবা তারা দৃশ্যমান অঞ্চলের বাইরের তরঙ্গদৈর্ঘ্যের আলো বিকিরণ করে। পটাশিয়াম (K⁺) বেগুনী, ক্যালসিয়াম (Ca²⁺) ইটের মতো লাল, এবং কপার (Cu²⁺) নীলাভ-সবুজ বর্ণ দেখায়।</p>",
+        },
+        {
+          id: 45,
+          question: "অজৈব লবণের ক্ষারীয়মূলক বিশ্লেষণে কোন শিখা ব্যবহৃত হয়?",
+          options: {
+            A: "অনুজ্জ্বল",
+            B: "অন্তঃস্থ নীল বিজারণ শিখা",
+            C: "বিজারণ শিখা",
+            D: "উজ্জ্বল",
+          },
+          correct: "B",
+          explanation:
+            "<p>অজৈব লবণের ক্ষারীয়মূলক বিশ্লেষণে, বিশেষ করে শিখা পরীক্ষায়, **অন্তঃস্থ নীল বিজারণ শিখা** (Inner blue reducing flame) ব্যবহৃত হয়। বুনসেন বার্নারের শিখার এই অংশটি উচ্চ তাপমাত্রা এবং বিজারণ ধর্ম সম্পন্ন হয়, যা ধাতব আয়নগুলোকে উত্তেজিত করতে এবং তাদের বৈশিষ্ট্যমূলক বর্ণ প্রদর্শন করতে সাহায্য করে। এই শিখাটি বিশ্লেষণ প্রক্রিয়ার জন্য উপযুক্ত তাপমাত্রা এবং পরিবেশ প্রদান করে।</p>",
+        },
+        {
+          id: 46,
+          question:
+            "পটাশিয়াম পাইরোঅ্যান্টিমোনেট দ্রবণ দ্বারা কোন ক্যাটায়ন শনাক্ত করা যায়?",
+          options: {
+            A: "Zn²⁺",
+            B: "Cu²⁺",
+            C: "Na⁺",
+            D: "NH₄⁺",
+          },
+          correct: "C",
+          explanation:
+            "<p>**পটাশিয়াম পাইরোঅ্যান্টিমোনেট (K₂H₂Sb₂O₇) দ্রবণ** ব্যবহার করে **সোডিয়াম আয়ন (Na⁺)** শনাক্ত করা হয়। Na⁺ আয়নের উপস্থিতিতে পটাশিয়াম পাইরোঅ্যান্টিমোনেট সাদা, দানাদার অধঃক্ষেপ Na₂H₂Sb₂O₇ তৈরি করে। এই পরীক্ষাটি সোডিয়াম আয়নের নিশ্চিতকরণ পরীক্ষা হিসেবে পরিচিত।</p>",
+        },
+        {
+          id: 47,
+          question:
+            "অ্যামোনিয়াম অক্সালেট দ্রবণ দ্বারা কোন ক্যাটায়নের নিশ্চিতকরণ করা যায়?",
+          options: {
+            A: "Ca²⁺",
+            B: "Zn²⁺",
+            C: "Fe²⁺",
+            D: "Na⁺",
+          },
+          correct: "A",
+          explanation:
+            "<p>**অ্যামোনিয়াম অক্সালেট ((NH₄)₂C₂O₄) দ্রবণ** ব্যবহার করে **ক্যালসিয়াম আয়ন (Ca²⁺)** এর নিশ্চিতকরণ পরীক্ষা করা হয়। Ca²⁺ আয়নের উপস্থিতিতে অ্যামোনিয়াম অক্সালেট একটি সাদা, কেলাসাকার অধঃক্ষেপ CaC₂O₄ (ক্যালসিয়াম অক্সালেট) তৈরি করে, যা অ্যাসিটিক অ্যাসিডে অদ্রবণীয় কিন্তু খনিজ অ্যাসিডে দ্রবণীয়। এই পরীক্ষাটি ক্যালসিয়াম আয়ন শনাক্তকরণের জন্য খুবই কার্যকর।</p>",
+        },
+        {
+          id: 48,
+          question:
+            "Cu²⁺ আয়নের দ্রবণে অধিক NH₄OH দ্রবণ যোগ করলে কী বর্ণ সৃষ্টি হয়?",
+          options: {
+            A: "হালকা নীল",
+            B: "গাঢ় নীল",
+            C: "বাদামি",
+            D: "সবুজ",
+          },
+          correct: "B",
+          explanation:
+            "<p>কপার(II) আয়ন (Cu²⁺) এর দ্রবণে প্রথমে অল্প পরিমাণে অ্যামোনিয়াম হাইড্রক্সাইড (NH₄OH) যোগ করলে হালকা নীল রঙের কপার(II) হাইড্রক্সাইড (Cu(OH)₂) এর অধঃক্ষেপ পড়ে। তবে, **অধিক পরিমাণে NH₄OH দ্রবণ যোগ করলে** এই অধঃক্ষেপ দ্রবীভূত হয়ে টেট্রামিনকপার(II) আয়ন, [Cu(NH₃)₄]²⁺, উৎপন্ন করে, যা **গাঢ় নীল** বা অ্যাজুর নীল বর্ণ ধারণ করে। এটি কপার(II) আয়ন শনাক্তকরণের একটি অত্যন্ত গুরুত্বপূর্ণ এবং বৈশিষ্ট্যমূলক পরীক্ষা।</p>",
+        },
+        {
+          id: 49,
+          question:
+            "নেসলার’স রিএজেন্ট দ্বারা নিচের কোন ক্যাটায়ন (Cation) শনাক্ত করা যায়?",
+          options: {
+            A: "Na⁺",
+            B: "Zn²⁺",
+            C: "Fe²⁺",
+            D: "NH₄⁺",
+          },
+          correct: "D",
+          explanation:
+            "<p>**নেসলার’স রিএজেন্ট** (নেসলার দ্রবণ, K₂[HgI₄] এবং KOH এর দ্রবণ) ব্যবহার করে **অ্যামোনিয়াম আয়ন (NH₄⁺)** শনাক্ত করা হয়। অ্যামোনিয়াম আয়নের উপস্থিতিতে নেসলার দ্রবণ **বাদামী বর্ণের অধঃক্ষেপ** (মিলিয়নের ক্ষারক, HgO.Hg₂NH₂I) বা হলুদাভ বাদামী বর্ণ ধারণ করে, যা অ্যামোনিয়া বা অ্যামোনিয়াম আয়ন শনাক্তকরণের একটি অত্যন্ত সংবেদনশীল এবং নিশ্চিতকরণ পরীক্ষা।</p>",
+        },
+        {
+          id: 50,
+          question: "দ্রবণে Na⁺ আয়ন শনাক্তকরণে নিচের কোনটি ব্যবহৃত হয়?",
+          options: {
+            A: "(NH₄)₂C₂O₄",
+            B: "K₂H₂Sb₂O₇",
+            C: "Na₂H₂Sb₂O₇",
+            D: "AgNO₃",
+          },
+          correct: "B",
+          explanation:
+            "<p>দ্রবণে **সোডিয়াম আয়ন (Na⁺)** শনাক্তকরণের জন্য **পটাশিয়াম পাইরোঅ্যান্টিমোনেট (K₂H₂Sb₂O₇) দ্রবণ** ব্যবহৃত হয়। Na⁺ আয়নের উপস্থিতিতে এটি সাদা, কেলাসাকার সোডিয়াম পাইরোঅ্যান্টিমোনেট (Na₂H₂Sb₂O₇) অধঃক্ষেপ তৈরি করে। এই পরীক্ষাটি সোডিয়াম আয়নের নিশ্চিতকরণ পরীক্ষা হিসেবে পরিচিত। (NH₄)₂C₂O₄ ক্যালসিয়াম আয়ন শনাক্তকরণে ব্যবহৃত হয়, আর AgNO₃ অনেক অ্যানায়ন ও কিছু ক্যাটায়ন শনাক্তকরণে ব্যবহৃত হয়।</p>",
+        },
+        {
+          id: 51,
+          question: "Ca²⁺ শনাক্তকরণে কোনটি ব্যবহৃত হয়?",
+          options: {
+            A: "K₂H₂Sb₂O₇",
+            B: "(NH₄)₂C₂O₄",
+            C: "AgNO₃",
+            D: "K₂H₂Sb₃O₇",
+          },
+          correct: "B",
+          explanation:
+            "<p>**ক্যালসিয়াম আয়ন (Ca²⁺)** শনাক্তকরণের জন্য **অ্যামোনিয়াম অক্সালেট ((NH₄)₂C₂O₄) দ্রবণ** একটি নিশ্চিতকরণ বিকারক হিসেবে ব্যবহৃত হয়। Ca²⁺ আয়নের সাথে অ্যামোনিয়াম অক্সালেট বিক্রিয়া করে সাদা রঙের ক্যালসিয়াম অক্সালেট (CaC₂O₄) এর অধঃক্ষেপ তৈরি করে। K₂H₂Sb₂O₇ সোডিয়াম আয়ন শনাক্তকরণে ব্যবহৃত হয়, এবং AgNO₃ অনেক অ্যানায়ন ও কিছু ক্যাটায়ন শনাক্তকরণে ব্যবহৃত হয়।</p>",
+        },
+        {
+          id: 52,
+          question: "NH₄⁺ আয়ন শনাক্তকরণে ব্যবহৃত বিকারক হলো-",
+          options: {
+            A: "AgNO₃ দ্রবণ",
+            B: "BaCl₂ দ্রবণ",
+            C: "নেসলার দ্রবণ",
+            D: "NH₄OH দ্রবণ",
+          },
+          correct: "C",
+          explanation:
+            "<p>**অ্যামোনিয়াম আয়ন (NH₄⁺)** শনাক্তকরণের জন্য **নেসলার দ্রবণ (K₂[HgI₄] এবং KOH এর ক্ষারীয় দ্রবণ)** ব্যবহৃত হয়। অ্যামোনিয়াম আয়নের উপস্থিতিতে নেসলার দ্রবণ বাদামী বর্ণের অধঃক্ষেপ বা হলুদাভ বাদামী বর্ণ ধারণ করে, যা অ্যামোনিয়া বা অ্যামোনিয়াম আয়ন শনাক্তকরণের একটি অত্যন্ত সংবেদনশীল এবং নিশ্চিতকরণ পরীক্ষা। অন্যান্য বিকল্পগুলো NH₄⁺ আয়ন শনাক্তকরণের জন্য উপযুক্ত নয়।</p>",
+        },
+        {
+          id: 53,
+          question: "সোডিয়াম পাইরো অ্যান্টিমোনেটের সংকেত কোনটি হবে?",
+          options: {
+            A: "NaHSbO₂",
+            B: "HNO₂",
+            C: "Na₂H₂Sb₂O₇",
+            D: "NaHSb₂O₇",
+          },
+          correct: "C",
+          explanation:
+            "<p>**সোডিয়াম পাইরোঅ্যান্টিমোনেট** এর সঠিক সংকেত হলো **Na₂H₂Sb₂O₇**। এটি সোডিয়াম আয়ন শনাক্তকরণে ব্যবহৃত হয় এবং পটাশিয়াম পাইরোঅ্যান্টিমোনেট (K₂H₂Sb₂O₇) এর সাথে সোডিয়াম আয়নের বিক্রিয়ায় উৎপন্ন হয়। এটি একটি সাদা, কেলাসাকার অধঃক্ষেপ হিসেবে দেখা যায়।</p>",
+        },
+        {
+          id: 54,
+          question: "Zn²⁺ নিশ্চিতকরণে বিকারকের নাম কী?",
+          options: {
+            A: "পটাসিয়াম ফেরিসায়ানাইড",
+            B: "পটাসিয়াম ফেরোসায়ানাইড",
+            C: "পটাসিয়াম ক্রোমেট",
+            D: "পটাসিয়াম পাইরো অ্যান্টিমোনেট",
+          },
+          correct: "B",
+          explanation:
+            "<p>**জিংক আয়ন (Zn²⁺)** নিশ্চিতকরণের জন্য **পটাসিয়াম ফেরোসায়ানাইড (K₄[Fe(CN)₆]) দ্রবণ** ব্যবহৃত হয়। Zn²⁺ আয়নের উপস্থিতিতে পটাসিয়াম ফেরোসায়ানাইড একটি সাদা বা হালকা নীলচে সাদা অধঃক্ষেপ K₂Zn[Fe(CN)₆] তৈরি করে, যা জিংক আয়ন শনাক্তকরণের একটি বৈশিষ্ট্যমূলক পরীক্ষা।</p>",
+        },
+        {
+          id: 55,
+          question: "নিম্নের কোনটি নেসলার বিকারক?",
+          options: {
+            A: "K₂[HgI₄]",
+            B: "HNO₂",
+            C: "KHSO₄",
+            D: "C₆H₅NH₃",
+          },
+          correct: "A",
+          explanation:
+            "<p>**নেসলার বিকারক** হলো পটাশিয়াম টেট্রাআয়োডোমারকিউরেট(II) এর ক্ষারীয় দ্রবণ, যার সংকেত হলো **K₂[HgI₄]** (পটাশিয়াম মারকিউরিক আয়োডাইড)। এটি অ্যামোনিয়া এবং অ্যামোনিয়াম আয়ন শনাক্তকরণের জন্য একটি অত্যন্ত সংবেদনশীল বিকারক, যা বাদামী বা হলুদাভ-বাদামী অধঃক্ষেপ উৎপন্ন করে।</p>",
+        },
+        {
+          id: 56,
+          question:
+            "নিচের কোন ক্যাটায়ন শনাক্তকরণে পটাসিয়াম ফেরোসায়ানাইড দ্রবণ ব্যবহৃত হয়?",
+          options: {
+            A: "K⁺",
+            B: "Na⁺",
+            C: "Ca²⁺",
+            D: "Cu²⁺",
+          },
+          correct: "D",
+          explanation:
+            "<p>**পটাসিয়াম ফেরোসায়ানাইড (K₄[Fe(CN)₆]) দ্রবণ** ব্যবহার করে বিভিন্ন ক্যাটায়ন শনাক্ত করা যায়। **কপার(II) আয়ন (Cu²⁺)** এর উপস্থিতিতে পটাসিয়াম ফেরোসায়ানাইড একটি বৈশিষ্ট্যমূলক লালচে বাদামী অধঃক্ষেপ (কপার(II) ফেরোসায়ানাইড, Cu₂[Fe(CN)₆]) তৈরি করে। এটি কপার আয়ন শনাক্তকরণের একটি গুরুত্বপূর্ণ পরীক্ষা। জিংক আয়ন সাদা বা হালকা নীলচে সাদা অধঃক্ষেপ দেয়।</p>",
+        },
+        {
+          id: 57,
+          question: "কোনটি অতিরিক্ত NH₃ দ্রবণে দ্রবণীয়?",
+          options: {
+            A: "Cu²⁺",
+            B: "Fe³⁺",
+            C: "Zn²⁺",
+            D: "Ca²⁺",
+          },
+          correct: "C",
+          explanation:
+            "<p>অতিরিক্ত অ্যামোনিয়া (NH₃) দ্রবণে জিংক হাইড্রক্সাইড (Zn(OH)₂) দ্রবণীয়। জিংক আয়ন (Zn²⁺) অ্যামোনিয়ার সাথে বিক্রিয়া করে প্রথমে সাদা অধঃক্ষেপ Zn(OH)₂ উৎপন্ন করে, যা অতিরিক্ত NH₃ দ্রবণে দ্রবীভূত হয়ে একটি জটিল যৌগ, টেট্রামিনজিংক(II) আয়ন ([Zn(NH₃)₄]²⁺) তৈরি করে। এই জটিল আয়নটি বর্ণহীন এবং পানিতে দ্রবণীয়।<br>Cu²⁺ অতিরিক্ত NH₃ দ্রবণে দ্রবণীয় হয়ে গাঢ় নীল [Cu(NH₃)₄]²⁺ গঠন করে।<br>Fe³⁺ (Fe(OH)₃) এবং Ca²⁺ (Ca(OH)₂) অতিরিক্ত NH₃ দ্রবণে অদ্রবণীয় থাকে।</p>",
+        },
+        {
+          id: 58,
+          question: "কোনটি শনাক্তকরণে বেরিয়াম নাইট্রেট ব্যবহার করা হয়?",
+          options: {
+            A: "NH₄⁺",
+            B: "Ca²⁺",
+            C: "Cl⁻",
+            D: "SO₄²⁻",
+          },
+          correct: "D",
+          explanation:
+            "<p>**সালফেট আয়ন (SO₄²⁻)** শনাক্তকরণের জন্য **বেরিয়াম নাইট্রেট (Ba(NO₃)₂) দ্রবণ** ব্যবহার করা হয়। SO₄²⁻ আয়নের উপস্থিতিতে বেরিয়াম নাইট্রেট সাদা বেরিয়াম সালফেট (BaSO₄) এর অধঃক্ষেপ তৈরি করে, যা হাইড্রোক্লোরিক অ্যাসিডে অদ্রবণীয়। এই পরীক্ষাটি সালফেট আয়ন শনাক্তকরণের একটি নিশ্চিতকরণ পরীক্ষা।</p>",
+        },
+        {
+          id: 59,
+          question: "K₄[Fe(CN)₆] এর দ্রবণ দ্বারা কোন আয়নটি শনাক্ত করা হয়?",
+          options: {
+            A: "Na⁺",
+            B: "NH₄⁺",
+            C: "Ca²⁺",
+            D: "Zn²⁺",
+          },
+          correct: "D",
+          explanation:
+            "<p>**পটাসিয়াম ফেরোসায়ানাইড (K₄[Fe(CN)₆]) এর দ্রবণ** ব্যবহার করে **জিংক আয়ন (Zn²⁺)** শনাক্ত করা হয়। Zn²⁺ আয়নের সাথে পটাসিয়াম ফেরোসায়ানাইড বিক্রিয়া করে সাদা বা হালকা নীলচে সাদা অধঃক্ষেপ K₂Zn[Fe(CN)₆] তৈরি করে। কপার(II) আয়নও এর সাথে লালচে বাদামী অধঃক্ষেপ তৈরি করে। Na⁺, NH₄⁺, Ca²⁺ আয়ন শনাক্তকরণের জন্য এটি ব্যবহৃত হয় না।</p>",
+        },
+        {
+          id: 60,
+          question: "সালফেট আয়ন (SO₄²⁻) শনাক্তকরণে ব্যবহৃত হয় কোনটি?",
+          options: {
+            A: "AgCl",
+            B: "AgNO₃",
+            C: "Ba(NO₃)₂",
+            D: "BaSO₄",
+          },
+          correct: "C",
+          explanation:
+            "<p>**সালফেট আয়ন (SO₄²⁻)** শনাক্তকরণের জন্য **বেরিয়াম নাইট্রেট (Ba(NO₃)₂) দ্রবণ** ব্যবহৃত হয়। সালফেট আয়নের উপস্থিতিতে Ba(NO₃)₂ বিক্রিয়া করে সাদা বেরিয়াম সালফেট (BaSO₄) এর অধঃক্ষেপ উৎপন্ন করে, যা হাইড্রোক্লোরিক অ্যাসিডে অদ্রবণীয়। এই পরীক্ষাটি সালফেট আয়ন শনাক্তকরণের একটি নিশ্চিতকরণ পরীক্ষা।</p>",
+        },
+        {
+          id: 61,
+          question:
+            "A + Ba(NO₃)₂ → সাদা অধঃক্ষেপ; HCl-এ অদ্রবণীয়; 'A' যৌগে নিচের কোন মূলকটি বিদ্যমান?",
+          options: {
+            A: "CO₃²⁻",
+            B: "Fe(CNS)₂",
+            C: "NH₄⁺",
+            D: "SO₄²⁻",
+          },
+          correct: "D",
+          explanation:
+            "<p>যখন একটি দ্রবণে Ba(NO₃)₂ যোগ করার পর **সাদা অধঃক্ষেপ** উৎপন্ন হয় এবং সেই অধঃক্ষেপ **HCl-এ অদ্রবণীয়** থাকে, তখন এটি নিশ্চিত করে যে দ্রবণে **সালফেট আয়ন (SO₄²⁻)** বিদ্যমান। বেরিয়াম সালফেট (BaSO₄) একটি সাদা অধঃক্ষেপ এবং এটি HCl-এ অদ্রবণীয়। কার্বনেট অধঃক্ষেপ (BaCO₃) সাদা হলেও তা HCl-এ দ্রবণীয়, তাই এই ক্ষেত্রে SO₄²⁻ ই সঠিক উত্তর।</p>",
+        },
+        {
+          id: 62,
+          question: "Cu²⁺ আয়ন শনাক্তকরণে ব্যবহৃত হয়-",
+          options: {
+            A: "ক্ষারীয় K₂HgI₄",
+            B: "K₄[Fe(CN)₆]",
+            C: "K₂H₂Sb₂O₇",
+            D: "CaC₂O₂",
+          },
+          correct: "B",
+          explanation:
+            "<p>**কপার(II) আয়ন (Cu²⁺)** শনাক্তকরণের জন্য **পটাসিয়াম ফেরোসায়ানাইড (K₄[Fe(CN)₆])** দ্রবণ একটি গুরুত্বপূর্ণ বিকারক। Cu²⁺ আয়নের উপস্থিতিতে পটাসিয়াম ফেরোসায়ানাইড একটি বৈশিষ্ট্যমূলক **লালচে বাদামী অধঃক্ষেপ** (কপার(II) ফেরোসায়ানাইড, Cu₂[Fe(CN)₆]) তৈরি করে। ক্ষারীয় K₂HgI₄ (নেসলার দ্রবণ) অ্যামোনিয়াম আয়ন শনাক্তকরণে, K₂H₂Sb₂O₇ সোডিয়াম আয়ন শনাক্তকরণে এবং CaC₂O₂ ক্যালসিয়াম আয়ন শনাক্তকরণে ব্যবহৃত হয় না।</p>",
+        },
+        {
+          id: 63,
+          question: "নিচের কোনটি রক্তের ন্যায় লাল দ্রবণের সংকেত?",
+          options: {
+            A: "Fe(CNS)₃",
+            B: "Fe(CNS)₂",
+            C: "NH₄CNS",
+            D: "KCNS",
+          },
+          correct: "A",
+          explanation:
+            "<p>**ফেরিক থায়োসায়ানেট (Fe(CNS)₃) বা Fe(SCN)₃** হলো একটি জটিল যৌগ যা **রক্তের ন্যায় লাল** বর্ণ ধারণ করে। ফেরিক আয়ন (Fe³⁺) এর দ্রবণে থায়োসায়ানেট আয়ন (SCN⁻) যোগ করলে এই বৈশিষ্ট্যমূলক লাল বর্ণ উৎপন্ন হয়, যা ফেরিক আয়ন শনাক্তকরণের একটি নিশ্চিতকরণ পরীক্ষা। এটি সাধারণত ফে<sub>3</sub>+ এবং থায়োসায়ানেট আয়নের বিক্রিয়া দ্বারা গঠিত হয়।</p>",
+        },
+        {
+          id: 64,
+          question:
+            "একটি নমুনা লবণের ক্ষারীয় দ্রবণে H₂S গ্যাস চালনা করে সাদা অধঃক্ষেপ পাওয়া গেল। নমুনা লবণের দ্রবণে কোন ধাতুটির উপস্থিতি নির্দেশ করে?",
+          options: {
+            A: "Ni",
+            B: "Co",
+            C: "Mn",
+            D: "Zn",
+          },
+          correct: "D",
+          explanation:
+            "<p>গ্রুপ IV ক্যাটায়নগুলো ক্ষারীয় মাধ্যমে হাইড্রোজেন সালফাইড (H₂S) গ্যাস চালনা করলে সালফাইড রূপে অধঃক্ষিপ্ত হয়। এই গ্রুপে Ni²⁺, Co²⁺, Mn²⁺, Zn²⁺ অন্তর্ভুক্ত। এদের মধ্যে **জিংক (Zn²⁺) আয়ন** H₂S এর সাথে বিক্রিয়া করে **সাদা জিংক সালফাইড (ZnS)** এর অধঃক্ষেপ তৈরি করে। নিকেল (Ni) এবং কোবাল্ট (Co) কালো অধঃক্ষেপ দেয়, আর ম্যাঙ্গানিজ (Mn) গোলাপী বা মাংসল রঙের অধঃক্ষেপ দেয়। তাই সাদা অধঃক্ষেপের উপস্থিতি জিংক নির্দেশ করে।</p>",
+        },
+        {
+          id: 65,
+          question:
+            "নিম্নের কোন দ্রবণ Fe(III) এর অবস্থান শনাক্তকরণে ব্যবহার করা হয়?",
+          options: {
+            A: "NH₄OH",
+            B: "NH₄SCN",
+            C: "Na₂S₂O₃",
+            D: "KMnO₄",
+          },
+          correct: "B",
+          explanation:
+            "<p>**অ্যামোনিয়াম থায়োসায়ানেট (NH₄SCN) দ্রবণ** ব্যবহার করে **ফেরিক আয়ন (Fe³⁺)** শনাক্ত করা হয়। Fe³⁺ আয়নের উপস্থিতিতে NH₄SCN বিক্রিয়া করে একটি গভীর **রক্তের ন্যায় লাল** বর্ণের দ্রবণ বা জটিল যৌগ (ফেরিক থায়োসায়ানেট, Fe(SCN)₃) তৈরি করে। এটি ফেরিক আয়ন শনাক্তকরণের একটি অত্যন্ত সংবেদনশীল এবং বৈশিষ্ট্যমূলক পরীক্ষা। NH₄OH ফেরিক হাইড্রক্সাইডের অধঃক্ষেপ তৈরি করে, যা বাদামী হয়।</p>",
+        },
+        {
+          id: 66,
+          question:
+            "কোন জোড়া জলীয় দ্রবণের মিশ্রণের ফলে হলুদ অধঃক্ষেপ তৈরি হয়?",
+          options: {
+            A: "AlCl₃ এবং KOH",
+            B: "Ba(NO₃)₂ এবং Na₂SO₄",
+            C: "Cu(NO₃)₂ এবং NaClO₄",
+            D: "Pb(C₂H₃O₂)₂ এবং KI",
+          },
+          correct: "D",
+          explanation:
+            "<p>যখন **লেড(II) অ্যাসিটেট (Pb(C₂H₃O₂)₂) এবং পটাসিয়াম আয়োডাইড (KI) এর জলীয় দ্রবণ মিশ্রিত করা হয়, তখন একটি বৈশিষ্ট্যমূলক উজ্জ্বল হলুদ বর্ণের লেড(II) আয়োডাইড (PbI₂) এর অধঃক্ষেপ তৈরি হয়।**<br>বিক্রিয়াটি নিম্নরূপ: Pb(C₂H₃O₂)₂ (aq) + 2KI (aq) → PbI₂ (s) + 2KC₂H₃O₂ (aq)<br>AlCl₃ এবং KOH সাদা অধঃক্ষেপ Al(OH)₃ দেয়। Ba(NO₃)₂ এবং Na₂SO₄ সাদা অধঃক্ষেপ BaSO₄ দেয়। Cu(NO₃)₂ এবং NaClO₄ কোনো অধঃক্ষেপ তৈরি করে না, কারণ উৎপন্ন কপার পারক্লোরেট এবং সোডিয়াম নাইট্রেট উভয়ই দ্রবণীয়।</p>",
+        },
+        {
+          id: 67,
+          question:
+            "নিম্নের কোন পরীক্ষাটি সালফিউরিক এসিড ও নাইট্রিক এসিডের মধ্যে পার্থক্য করতে ব্যবহার করা যায়?",
+          options: {
+            A: "সার্বজনীন নির্দেশক",
+            B: "সোডিয়াম কার্বনেট গুড়া",
+            C: "ম্যাগনেসিয়াম ফিতা",
+            D: "বেরিয়াম নাইট্রেট দ্রবণ",
+          },
+          correct: "D",
+          explanation:
+            "<p>**বেরিয়াম নাইট্রেট (Ba(NO₃)₂) দ্রবণ** ব্যবহার করে সালফিউরিক অ্যাসিড (H₂SO₄) এবং নাইট্রিক অ্যাসিড (HNO₃) এর মধ্যে পার্থক্য করা যায়। যখন Ba(NO₃)₂ দ্রবণ সালফিউরিক অ্যাসিডে যোগ করা হয়, তখন সাদা বেরিয়াম সালফেট (BaSO₄) এর অধঃক্ষেপ উৎপন্ন হয়, যা HCl-এ অদ্রবণীয়।<br>H₂SO₄(aq) + Ba(NO₃)₂(aq) → BaSO₄(s) + 2HNO₃(aq)<br>কিন্তু নাইট্রিক অ্যাসিডের সাথে Ba(NO₃)₂ কোনো অধঃক্ষেপ তৈরি করে না। তাই এটি সালফিউরিক অ্যাসিডের উপস্থিতি নিশ্চিত করে এবং দুটি অ্যাসিডের মধ্যে পার্থক্য করতে সাহায্য করে।</p>",
+        },
+        {
+          id: 68,
+          question: "নিচের কোনটি লাল আলোর তরঙ্গদৈর্ঘ্য?",
+          options: {
+            A: "500 - 575 nm",
+            B: "575 - 590 nm",
+            C: "590 - 647 nm",
+            D: "647 - 700 nm",
+          },
+          correct: "D",
+          explanation:
+            "<p>দৃশ্যমান আলোর বর্ণালিতে প্রতিটি বর্ণের একটি নির্দিষ্ট তরঙ্গদৈর্ঘ্য সীমা থাকে। **লাল আলোর তরঙ্গদৈর্ঘ্য সাধারণত 647 nm থেকে 700 nm** এর মধ্যে হয়।<br>• 500 - 575 nm: সবুজ<br>• 575 - 590 nm: হলুদ<br>• 590 - 647 nm: কমলা<br>• 647 - 700 nm: লাল</p>",
+        },
+        {
+          id: 69,
+          question: "ব্রেনের চিকিৎসায় কার্যকর থেরাপি কোনটি?",
+          options: {
+            A: "MRI থেরাপি",
+            B: "IR থেরাপি",
+            C: "X থেরাপি",
+            D: "UV থেরাপি",
+          },
+          correct: "A",
+          explanation:
+            "<p>**MRI (Magnetic Resonance Imaging) থেরাপি** বা ইমেজিনং মস্তিষ্কের রোগ নির্ণয় ও চিকিৎসায় অত্যন্ত কার্যকর। এটি শক্তিশালী চৌম্বক ক্ষেত্র এবং রেডিও তরঙ্গ ব্যবহার করে দেহের ভেতরের অঙ্গ-প্রত্যঙ্গের বিস্তারিত চিত্র তৈরি করে। মস্তিষ্কের টিউমার, স্ট্রোক, সংক্রমণ, বা আঘাতের মতো রোগ নির্ণয়ে MRI একটি নিরাপদ ও গুরুত্বপূর্ণ পদ্ধতি, কারণ এতে ক্ষতিকর আয়নাইজিং বিকিরণ (যেমন X-ray) ব্যবহার করা হয় না।</p>",
+        },
+        {
+          id: 70,
+          question: "US $ 10 নিচের কোন বর্ণের আভা ছড়ায়?",
+          options: {
+            A: "কমলা",
+            B: "নীল",
+            C: "লাল",
+            D: "গোলাপি",
+          },
+          correct: "A",
+          explanation:
+            "<p>মার্কিন যুক্তরাষ্ট্রের 10 ডলারের নোটে বিশেষ নিরাপত্তা বৈশিষ্ট্য থাকে, যা UV রশ্মিতে ধরলে একটি নির্দিষ্ট বর্ণের আভা ছড়ায়। US $ 10 ডলারের নোটে সাধারণত কমলা বর্ণের আভা দেখা যায়, যা জাল টাকা শনাক্তকরণে একটি সহায়ক বৈশিষ্ট্য। বিভিন্ন মূল্যের নোট বিভিন্ন রঙের আভা ছড়ায়, যা নিরাপত্তা সুতার সাথে যুক্ত ফ্লোরেসেন্ট কালির কারণে হয়।</p>",
+        },
+        {
+          id: 71,
+          question: "নিচের কোন আলোক রশ্মির তরঙ্গদৈর্ঘ্য সবচেয়ে দীর্ঘ?",
+          options: {
+            A: "Gamma ray",
+            B: "Microwave",
+            C: "Visible ray",
+            D: "X-ray",
+          },
+          correct: "B",
+          explanation:
+            "<p>তড়িৎচুম্বকীয় বর্ণালির মধ্যে **মাইক্রোওয়েভ (Microwave)** রশ্মির তরঙ্গদৈর্ঘ্য তুলনামূলকভাবে **সবচেয়ে দীর্ঘ**। তড়িৎচুম্বকীয় বর্ণালিতে তরঙ্গদৈর্ঘ্যের ক্রম নিম্নরূপ (দীর্ঘ থেকে ক্ষুদ্র): রেডিওওয়েভ > মাইক্রোওয়েভ > ইনফ্রারেড > দৃশ্যমান আলো > অতিবেগুনি > এক্স-রে > গামা রে। এর মধ্যে দেওয়া বিকল্পগুলোর মধ্যে মাইক্রোওয়েভই দীর্ঘতম তরঙ্গদৈর্ঘ্যের অধিকারী।</p>",
+        },
+        {
+          id: 72,
+          question:
+            "ইলেকট্রনের কোন অরবিটাল থেকে স্থানান্তর ঘটলে বামার সিরিজে ৩য় রেখা বর্ণালির উৎপত্তি হয়?",
+          options: {
+            A: "n₄ → n₁",
+            B: "n₄ → n₂",
+            C: "n₅ → n₂",
+            D: "n₅ → n₃",
+          },
+          correct: "C",
+          explanation:
+            "<p>হাইড্রোজেন পরমাণুর বর্ণালিতে **বামার সিরিজ** এর রেখাগুলো উৎপন্ন হয় যখন ইলেকট্রন উচ্চ শক্তিস্তর (n₂ > 2) থেকে দ্বিতীয় শক্তিস্তর (n₁ = 2) এ স্থানান্তরিত হয়। বামার সিরিজের ক্ষেত্রে:<br>• ১ম রেখা: n₃ → n₂<br>• ২য় রেখা: n₄ → n₂<br>• **৩য় রেখা: n₅ → n₂**<br>• ৪র্থ রেখা: n₆ → n₂<br>সুতরাং, বামার সিরিজের ৩য় রেখা বর্ণালির উৎপত্তি হয় যখন ইলেকট্রন n₅ অরবিটাল থেকে n₂ অরবিটালে স্থানান্তরিত হয়।</p>",
+        },
+        {
+          id: 73,
+          question: "নিচের কোন বর্ণের আলোক রশ্মির ফোটনের শক্তি সর্বাধিক?",
+          options: {
+            A: "সবুজ",
+            B: "বেগুনি",
+            C: "লাল",
+            D: "নীল",
+          },
+          correct: "B",
+          explanation:
+            "<p>আলোক রশ্মির ফোটনের শক্তি তার কম্পাঙ্ক (Frequency) এবং তরঙ্গদৈর্ঘ্য (Wavelength) এর উপর নির্ভরশীল। আইনস্টাইনের সূত্রানুযায়ী, E = hν (যেখানে E = শক্তি, h = প্ল্যাঙ্কের ধ্রুবক, ν = কম্পাঙ্ক) এবং ν = c/λ (যেখানে c = আলোর গতি, λ = তরঙ্গদৈর্ঘ্য)।<br>অর্থাৎ, শক্তি কম্পাঙ্কের সাথে সরাসরি সমানুপাতিক এবং তরঙ্গদৈর্ঘ্যের সাথে ব্যস্তানুপাতিক। দৃশ্যমান আলোর বর্ণালিতে, **বেগুনি আলোর তরঙ্গদৈর্ঘ্য সবচেয়ে কম এবং কম্পাঙ্ক সবচেয়ে বেশি**, তাই **বেগুনি আলোর ফোটনের শক্তি সর্বাধিক**। অন্যদিকে, লাল আলোর তরঙ্গদৈর্ঘ্য সবচেয়ে বেশি এবং কম্পাঙ্ক সবচেয়ে কম, তাই এর শক্তি সবচেয়ে কম।</p>",
+        },
+        {
+          id: 74,
+          question: "বর্ণালি সৃষ্টির বেলায় কোন সমীকরণটি প্রযোজ্য?",
+          options: {
+            A: "mvr = nh/2π",
+            B: "ΔE = hυ",
+            C: "Ū = RH × [1/n₁² - 1/n₂²]",
+            D: "E = mc²",
+          },
+          correct: "C",
+          explanation:
+            "<p>বর্ণালি সৃষ্টির বেলায় রিডবার্গ সমীকরণ (Rydberg formula) ব্যবহৃত হয়, যা পারমাণবিক বর্ণালির রেখাগুলোর তরঙ্গ সংখ্যা (wave number) নির্ণয়ে ব্যবহৃত হয়। <br> **Ū = RH × [1/n₁² - 1/n₂²]** <br> এখানে, Ū হলো তরঙ্গ সংখ্যা, R<sub>H</sub> হলো রিডবার্গ ধ্রুবক, n₁ হলো নিম্ন শক্তিস্তর এবং n₂ হলো উচ্চ শক্তিস্তর (n₂ > n₁)। এই সমীকরণটি হাইড্রোজেনের মতো এক-ইলেকট্রন বিশিষ্ট পরমাণুর রেখা বর্ণালি ব্যাখ্যা করে।<br>mvr = nh/2π বোরের কোয়ান্টাম শর্ত, ΔE = hυ ফোটনের শক্তি সমীকরণ, এবং E = mc² আইনস্টাইনের ভর-শক্তি সমীকরণ।</p>",
+        },
+        {
+          id: 75,
+          question:
+            "ত্বকের ক্ষত নিরাময়ে লেজার পদ্ধতিতে কোন রশ্মি ব্যবহৃত হয়?",
+          options: {
+            A: "UV রশ্মি",
+            B: "IR রশ্মি",
+            C: "Gamma রশ্মি",
+            D: "X-ray",
+          },
+          correct: "B",
+          explanation:
+            "<p>**ইনফ্রারেড (IR) রশ্মি** (অবলোহিত রশ্মি) চিকিৎসা ক্ষেত্রে, বিশেষ করে ত্বকের ক্ষত নিরাময়ে এবং ব্যথা উপশমে ব্যবহৃত হয়। IR রশ্মি টিস্যুতে প্রবেশ করে তাপ উৎপন্ন করে, যা রক্ত সঞ্চালন বাড়ায় এবং কোষের পুনরুজ্জীবনে সাহায্য করে। লেজার থেরাপিতে নির্দিষ্ট তরঙ্গদৈর্ঘ্যের IR রশ্মি ব্যবহার করে ত্বকের ক্ষত, প্রদাহ এবং পেশীর ব্যথা কমানো হয়। UV রশ্মি জীবাণুনাশক হলেও ত্বকের জন্য ক্ষতিকর হতে পারে, এবং গামা/X-ray মূলত ইমেজিং বা ক্যান্সার চিকিৎসায় ব্যবহৃত হয়।</p>",
+        },
+        {
+          id: 76,
+          question: "দৃশ্যমান আলোর তরঙ্গদৈর্ঘ্য কত nm?",
+          options: {
+            A: "380-780",
+            B: "10-380",
+            C: "380 - 10⁶",
+            D: "10⁻⁶ - 380",
+          },
+          correct: "A",
+          explanation:
+            "<p>**দৃশ্যমান আলোর তরঙ্গদৈর্ঘ্য** হলো তড়িৎচুম্বকীয় বর্ণালির সেই অংশ যা মানুষের চোখ দেখতে পায়। এর তরঙ্গদৈর্ঘ্য সাধারণত **380 ন্যানোমিটার (nm) থেকে 780 ন্যানোমিটার (nm)** এর মধ্যে হয়ে থাকে। এই পরিসরের মধ্যে বেগুনি (কম তরঙ্গদৈর্ঘ্য) থেকে শুরু করে লাল (বেশি তরঙ্গদৈর্ঘ্য) পর্যন্ত বিভিন্ন বর্ণ বিদ্যমান।</p>",
+        },
+        {
+          id: 77,
+          question:
+            "ইলেকট্রন ৩য় শক্তিস্তরে ফিরে আসলে কোন বর্ণালি রেখা দেখা যায়?",
+          options: {
+            A: "লিম্যান",
+            B: "ব্রাকেট",
+            C: "প্যাশ্চেন",
+            D: "বামার",
+          },
+          correct: "C",
+          explanation:
+            "<p>হাইড্রোজেন পরমাণুর বর্ণালিতে বিভিন্ন সিরিজ রয়েছে, যা ইলেকট্রনের নির্দিষ্ট নিম্ন শক্তিস্তরে ফিরে আসার উপর নির্ভর করে। যখন ইলেকট্রন উচ্চ শক্তিস্তর থেকে **৩য় শক্তিস্তরে (n₁ = 3) ফিরে আসে**, তখন **প্যাশ্চেন সিরিজ** এর বর্ণালি রেখাগুলো দেখা যায়।<br>• লিম্যান সিরিজ: n₁ = 1 (অতিবেগুনি অঞ্চল)<br>• বামার সিরিজ: n₁ = 2 (দৃশ্যমান অঞ্চল)<br>• **প্যাশ্চেন সিরিজ: n₁ = 3 (অবলোহিত অঞ্চল)**<br>• ব্রাকেট সিরিজ: n₁ = 4 (অবলোহিত অঞ্চল)<br>• ফুনড সিরিজ: n₁ = 5 (অবলোহিত অঞ্চল)</p>",
+        },
+        {
+          id: 78,
+          question:
+            "আসমানি আলোর তরঙ্গদৈর্ঘ্যের চেয়ে ছোট তরঙ্গদৈর্ঘ্যের আলো কোনটি?",
+          options: {
+            A: "নীল",
+            B: "সবুজ",
+            C: "কমলা",
+            D: "লাল",
+          },
+          correct: "A",
+          explanation:
+            "<p>দৃশ্যমান আলোর বর্ণালিতে, তরঙ্গদৈর্ঘ্য বৃদ্ধির ক্রম হলো: বেগুনি < নীল < আসমানি < সবুজ < হলুদ < কমলা < লাল। <br> অর্থাৎ, **আসমানি আলোর তরঙ্গদৈর্ঘ্যের চেয়ে ছোট তরঙ্গদৈর্ঘ্যের আলো হলো নীল** এবং বেগুনি। সবুজ, কমলা এবং লাল আলোর তরঙ্গদৈর্ঘ্য আসমানি আলোর চেয়ে বেশি।</p>",
+        },
+        {
+          id: 79,
+          question: "মানব শরীর থেকে কোন রশ্মি বিকিরিত হয়?",
+          options: {
+            A: "Near IR",
+            B: "Middle IR",
+            C: "Far IR",
+            D: "Radio wave",
+          },
+          correct: "C",
+          explanation:
+            "<p>মানব শরীর থেকে **ফার ইনফ্রারেড (Far IR) রশ্মি** বিকিরিত হয়। শরীরের তাপমাত্রা (প্রায় 37°C বা 98.6°F) ফার ইনফ্রারেড বর্ণালির মধ্যে তাপ শক্তি নির্গত করে। এই রশ্মি সাধারণত 6 থেকে 14 মাইক্রোমিটার (µm) তরঙ্গদৈর্ঘ্যের মধ্যে থাকে। Far IR রশ্মি শরীরের তাপমাত্রার স্বাভাবিক বিকিরণ এবং এটি শরীরের থেরাপিউটিক চিকিৎসায়ও ব্যবহৃত হয়।</p>",
+        },
+        {
+          id: 80,
+          question: "কোন রশ্মিটির শক্তি সর্বাধিক?",
+          options: {
+            A: "UV",
+            B: "IR",
+            C: "MW",
+            D: "RW",
+          },
+          correct: "A",
+          explanation:
+            "<p>তড়িৎচুম্বকীয় বর্ণালিতে রশ্মির শক্তি তার কম্পাঙ্কের সাথে সরাসরি সমানুপাতিক এবং তরঙ্গদৈর্ঘ্যের সাথে ব্যস্তানুপাতিক। অর্থাৎ, তরঙ্গদৈর্ঘ্য যত কম হবে, শক্তি তত বেশি হবে।<br>• UV (অতিবেগুনি): অপেক্ষাকৃত কম তরঙ্গদৈর্ঘ্য<br>• IR (অবলোহিত): মধ্যম তরঙ্গদৈর্ঘ্য<br>• MW (মাইক্রোওয়েভ): দীর্ঘ তরঙ্গদৈর্ঘ্য<br>• RW (রেডিওওয়েভ): সবচেয়ে দীর্ঘ তরঙ্গদৈর্ঘ্য<br>সুতরাং, প্রদত্ত বিকল্পগুলোর মধ্যে **অতিবেগুনি (UV) রশ্মির শক্তি সর্বাধিক**।</p>",
+        },
+        {
+          id: 81,
+          question:
+            "হাইড্রোজেন পরমাণুর বর্ণালিতে প্যাশ্চেন সিরিজ সৃষ্টি হয় কোন অঞ্চলে?",
+          options: {
+            A: "অতিবেগুনি",
+            B: "দৃশ্যমান",
+            C: "অবলোহিত",
+            D: "মাইক্রোওয়েভ",
+          },
+          correct: "C",
+          explanation:
+            "<p>হাইড্রোজেন পরমাণুর বর্ণালিতে বিভিন্ন সিরিজের রেখাগুলো ইলেকট্রনের স্থানান্তরের উপর নির্ভর করে। যখন ইলেকট্রন উচ্চ শক্তিস্তর থেকে **৩য় শক্তিস্তরে (n₁ = 3) ফিরে আসে**, তখন **প্যাশ্চেন সিরিজ** গঠিত হয়। প্যাশ্চেন সিরিজের রেখাগুলো **অবলোহিত (Infrared) অঞ্চলে** পাওয়া যায়।<br>• লিম্যান সিরিজ: অতিবেগুনি অঞ্চল<br>• বামার সিরিজ: দৃশ্যমান অঞ্চল<br>• **প্যাশ্চেন সিরিজ: অবলোহিত অঞ্চল**<br>• ব্রাকেট সিরিজ: অবলোহিত অঞ্চল<br>• ফুনড সিরিজ: অবলোহিত অঞ্চল</p>",
+        },
+        {
+          id: 82,
+          question:
+            "হাইড্রোজেন বর্ণালিতে অতিবেগুনি অঞ্চলে কোন সিরিজ উৎপন্ন হয়?",
+          options: {
+            A: "লাইমেন",
+            B: "বামার",
+            C: "প্যাশ্চেন",
+            D: "ফুড",
+          },
+          correct: "A",
+          explanation:
+            "<p>হাইড্রোজেন পরমাণুর বর্ণালিতে, যখন ইলেকট্রন উচ্চ শক্তিস্তর থেকে **প্রথম শক্তিস্তরে (n₁ = 1) ফিরে আসে**, তখন **লাইম্যান সিরিজ** গঠিত হয়। এই সিরিজের রেখাগুলো **অতিবেগুনি (Ultraviolet) অঞ্চলে** পাওয়া যায়। এটি হাইড্রোজেন বর্ণালির একটি মৌলিক সিরিজ।</p>",
+        },
+        {
+          id: 83,
+          question:
+            "একটি রশ্মির তরঙ্গ দৈর্ঘ্য 20 cm। এটি কোন ক্ষেত্রে ব্যবহৃত হতে পারে?",
+          options: {
+            A: "জাল টাকা শনাক্তকরণে",
+            B: "টেলিভিশনে",
+            C: "MRI",
+            D: "WiFi সংযোগে",
+          },
+          correct: "D",
+          explanation:
+            "<p>20 cm তরঙ্গদৈর্ঘ্যের রশ্মিটি মাইক্রোওয়েভ বা রেডিওওয়েভ অঞ্চলের কাছাকাছি পড়ে। এটি প্রায় 2.4 GHz কম্পাঙ্কের সাথে সম্পর্কিত। এই ধরনের তরঙ্গদৈর্ঘ্য এবং কম্পাঙ্ক সাধারণত **WiFi (Wireless Fidelity) সংযোগে** ব্যবহৃত হয়। WiFi রাউটারগুলো প্রায় 2.4 GHz বা 5 GHz ফ্রিকোয়েন্সিতে কাজ করে, যার তরঙ্গদৈর্ঘ্য সেন্টিমিটার পরিসরে থাকে।<br>• জাল টাকা শনাক্তকরণে UV রশ্মি<br>• টেলিভিশনে ইনফ্রারেড (রিমোট কন্ট্রোল) বা রেডিওওয়েভ (সম্প্রচার)<br>• MRI তে রেডিওওয়েভ<br></p>",
+        },
+        {
+          id: 84,
+          question:
+            "কোন রশ্মির তরঙ্গ সংখ্যা 1.0 × 10⁻⁴ m⁻¹। রশ্মিটি কোন তড়িৎ চুম্বকীয় অঞ্চলের?",
+          options: {
+            A: "দৃশ্যমান",
+            B: "IR",
+            C: "UV",
+            D: "MW",
+          },
+          correct: "D",
+          explanation:
+            "<p>তরঙ্গ সংখ্যা (Ū) হলো প্রতি একক দৈর্ঘ্যে তরঙ্গের সংখ্যা এবং এর একক m⁻¹ বা cm⁻¹। তরঙ্গ সংখ্যা তরঙ্গদৈর্ঘ্যের (λ) ব্যস্তানুপাতিক: Ū = 1/λ।<br>দেওয়া আছে, তরঙ্গ সংখ্যা Ū = 1.0 × 10⁻⁴ m⁻¹।<br>সুতরাং, তরঙ্গদৈর্ঘ্য λ = 1/Ū = 1 / (1.0 × 10⁻⁴ m⁻¹) = 1.0 × 10⁴ m।<br>1.0 × 10⁴ মিটার (10 কিলোমিটার) তরঙ্গদৈর্ঘ্য **মাইক্রোওয়েভ (MW)** বা রেডিওওয়েভ অঞ্চলের অন্তর্ভুক্ত। এটি অত্যন্ত দীর্ঘ তরঙ্গদৈর্ঘ্যের একটি রশ্মি। দৃশ্যমান, IR বা UV অঞ্চলের তরঙ্গদৈর্ঘ্য ন্যানোমিটার থেকে মাইক্রোমিটারের মধ্যে থাকে, যা মিটার স্কেলের থেকে অনেক ছোট।</p>",
+        },
+        {
+          id: 85,
+          question:
+            "হাইড্রোজেন পরমাণুর বর্ণালিতে কোন সিরিজের লাইন দেখা যায় না?",
+          options: {
+            A: "থমসন সিরিজ",
+            B: "প্যাশ্চেন সিরিজ",
+            C: "ব্রাকেট সিরিজ",
+            D: "ফুনড সিরিজ",
+          },
+          correct: "A",
+          explanation:
+            "<p>হাইড্রোজেন পরমাণুর বর্ণালিতে প্রধানত পাঁচটি সিরিজ রয়েছে: লিম্যান, বামার, প্যাশ্চেন, ব্রাকেট এবং ফুনড সিরিজ। প্রতিটি সিরিজের নাম একজন বিজ্ঞানীর নামে দেওয়া হয়েছে। **'থমসন সিরিজ'** নামে কোনো পরিচিত বর্ণালি সিরিজ হাইড্রোজেন পরমাণুর বর্ণালিতে **দেখা যায় না**। J.J. Thomson ইলেকট্রন আবিষ্কারের জন্য পরিচিত, তবে তার নামে কোনো বর্ণালি সিরিজ নেই।</p>",
+        },
+        {
+          id: 86,
+          question:
+            "H-পরমাণুর ইলেকট্রনীয় স্তরগুলোর মধ্যে কোনটি ফোটন শোষণ করে কিন্তু ফোটন বিকিরণ করে না?",
+          options: {
+            A: "1s",
+            B: "2s",
+            C: "2p",
+            D: "3s",
+          },
+          correct: "A",
+          explanation:
+            "<p>একটি পরমাণুর ইলেকট্রন যখন সর্বনিম্ন শক্তিস্তরে (ভূমি অবস্থা বা গ্রাউন্ড স্টেট) থাকে, তখন এটি স্থিতিশীল থাকে। এই অবস্থায় এটি আর ফোটন বিকিরণ করতে পারে না, কারণ এর নিচে আর কোনো শক্তিস্তর নেই যেখানে এটি নেমে আসতে পারে। তবে, এটি শক্তি শোষণ করে উচ্চতর শক্তিস্তরে (উত্তেজিত অবস্থা) যেতে পারে। হাইড্রোজেন পরমাণুর ক্ষেত্রে, **1s অরবিটাল হলো এর সর্বনিম্ন শক্তিস্তর (ভূমি অবস্থা)**। তাই 1s অরবিটালে থাকা ইলেকট্রন ফোটন শোষণ করতে পারে কিন্তু বিকিরণ করতে পারে না।</p>",
+        },
+        {
+          id: 87,
+          question: "কোন তরঙ্গদৈর্ঘ্যের UV রশ্মি জীবাণুনাশক হিসেবে কাজ করে?",
+          options: {
+            A: "240-280 nm",
+            B: "270-360 nm",
+            C: "280-380 nm",
+            D: "300-320 nm",
+          },
+          correct: "A",
+          explanation:
+            "<p>**UV-C রশ্মি** (অতিবেগুনি C) হলো সেই ধরনের অতিবেগুনি রশ্মি যার তরঙ্গদৈর্ঘ্য তুলনামূলকভাবে কম এবং শক্তি বেশি। এই রশ্মিটি বিশেষভাবে শক্তিশালী **জীবাণুনাশক** হিসেবে কাজ করে, কারণ এটি ব্যাকটেরিয়া, ভাইরাস এবং অন্যান্য অণুজীবের DNA বা RNA কে ক্ষতিগ্রস্ত করে তাদের বংশবৃদ্ধি রোধ করে। UV-C এর কার্যকারী তরঙ্গদৈর্ঘ্য পরিসীমা সাধারণত **240-280 ন্যানোমিটার (nm)**। এর মধ্যে 254 nm তরঙ্গদৈর্ঘ্য বিশেষভাবে কার্যকর।</p>",
+        },
+        {
+          id: 88,
+          question: "বেগুনি রশ্মির (violet ray) তরঙ্গদৈর্ঘ্য (wave length) কত?",
+          options: {
+            A: "570-590 nm",
+            B: "450-500 nm",
+            C: "500-570 nm",
+            D: "400-450 nm",
+          },
+          correct: "D",
+          explanation:
+            "<p>দৃশ্যমান আলোর বর্ণালিতে, **বেগুনি রশ্মির তরঙ্গদৈর্ঘ্য (violet ray) সাধারণত 400 ন্যানোমিটার (nm) থেকে 450 ন্যানোমিটার (nm)** এর মধ্যে হয়ে থাকে। এটি দৃশ্যমান আলোর সর্বনিম্ন তরঙ্গদৈর্ঘ্য। অন্যান্য বিকল্পগুলি:<br>• 570-590 nm: হলুদ<br>• 450-500 nm: নীল<br>• 500-570 nm: সবুজ</p>",
+        },
+        {
+          id: 89,
+          question: "কোন রশ্মির শক্তি সর্বাধিক?",
+          options: {
+            A: "UV",
+            B: "IR",
+            C: "MW",
+            D: "RW",
+          },
+          correct: "A",
+          explanation:
+            "<p>তড়িৎচুম্বকীয় বর্ণালিতে রশ্মির শক্তি তার কম্পাঙ্কের সাথে সরাসরি সমানুপাতিক এবং তরঙ্গদৈর্ঘ্যের সাথে ব্যস্তানুপাতিক। অর্থাৎ, তরঙ্গদৈর্ঘ্য যত কম হবে, শক্তি তত বেশি হবে।<br>• UV (অতিবেগুনি): অপেক্ষাকৃত কম তরঙ্গদৈর্ঘ্য ও উচ্চ শক্তি।<br>• IR (অবলোহিত): মধ্যম তরঙ্গদৈর্ঘ্য ও মধ্যম শক্তি।<br>• MW (মাইক্রোওয়েভ): দীর্ঘ তরঙ্গদৈর্ঘ্য ও কম শক্তি।<br>• RW (রেডিওওয়েভ): সবচেয়ে দীর্ঘ তরঙ্গদৈর্ঘ্য ও সর্বনিম্ন শক্তি।<br>সুতরাং, প্রদত্ত বিকল্পগুলোর মধ্যে **অতিবেগুনি (UV) রশ্মির শক্তি সর্বাধিক**।</p>",
+        },
+        {
+          id: 90,
+          question: "মোবাইল ফোনের কার্যকারিতা কোন তড়িৎ চুম্বকীয় অঞ্চলে?",
+          options: {
+            A: "IR",
+            B: "UV",
+            C: "RW",
+            D: "MW",
+          },
+          correct: "D",
+          explanation:
+            "<p>**মোবাইল ফোন** মূলত **মাইক্রোওয়েভ (MW) অঞ্চলে** কাজ করে। মোবাইল ফোন যোগাযোগে ব্যবহৃত রেডিও তরঙ্গগুলো মাইক্রোওয়েভ বর্ণালির অন্তর্ভুক্ত, যা সাধারণত গিগাহার্টজ (GHz) পরিসরে থাকে। এই তরঙ্গগুলো তথ্যের দ্রুত স্থানান্তরে সক্ষম এবং সেলুলার নেটওয়ার্কের মাধ্যমে যোগাযোগ স্থাপন করে।</p>",
+        },
+        {
+          id: 91,
+          question:
+            "কারেন্সি নোট UV রশ্মিতে ধরলে আভা ছড়ানোর পিছনে কারণ কোনটি?",
+          options: {
+            A: "নোটের নিরাপত্তা সুতা",
+            B: "ফ্লোরেসেন্ট ফসফোর কালি",
+            C: "উপস্থিত বিশেষ রং",
+            D: "অন্যকিছু",
+          },
+          correct: "B",
+          explanation:
+            "<p>কারেন্সি নোট বা টাকার জালিয়াতি রোধ করার জন্য বিভিন্ন নিরাপত্তা বৈশিষ্ট্য ব্যবহার করা হয়। এর মধ্যে একটি গুরুত্বপূর্ণ বৈশিষ্ট্য হলো, নোটে **ফ্লোরেসেন্ট ফসফোর কালি** ব্যবহার করা। যখন UV (অতিবেগুনি) রশ্মি এই কালির উপর পড়ে, তখন কালিটি UV শক্তি শোষণ করে এবং দৃশ্যমান আলো বিকিরণ করে, যা **আভা ছড়ায়**। এটি জাল টাকা শনাক্তকরণে ব্যবহৃত হয়, কারণ আসল নোটে নির্দিষ্ট প্যাটার্নে এই আভা দেখা যায়।</p>",
+        },
+        {
+          id: 92,
+          question:
+            "ক্রেডিট কার্ড জালিয়াতি রোধ করার জন্য কোন উপাদানযুক্ত বিশেষ কালির নিরাপত্তা চিহ্ন ব্যবহার করা হয়?",
+          options: {
+            A: "UV ফ্লোরোসেন্স",
+            B: "ফ্লোরোসেন্স ফসফোর",
+            C: "ফসফোরোসেন্স",
+            D: "UV-ফসফোর",
+          },
+          correct: "A",
+          explanation:
+            "<p>**ক্রেডিট কার্ড জালিয়াতি** রোধ করার জন্য **UV ফ্লোরোসেন্স (UV Fluorescence)** উপাদানযুক্ত বিশেষ কালির নিরাপত্তা চিহ্ন ব্যবহার করা হয়। এই বিশেষ কালিগুলো সাধারণ আলোতে অদৃশ্য থাকে, কিন্তু যখন সেগুলোর উপর UV রশ্মি ফেলা হয়, তখন তারা দৃশ্যমান আলো বিকিরণ করে এবং উজ্জ্বলভাবে জ্বলে ওঠে (ফ্লোরোসেন্স)। এটি ক্রেডিট কার্ডের সত্যতা যাচাই করতে সাহায্য করে, কারণ জাল কার্ডে এই বৈশিষ্ট্যটি থাকে না।</p>",
+        },
+        {
+          id: 93,
+          question: "দৃশ্যমান আলোর সর্বোচ্চ তরঙ্গ দৈর্ঘ্যের রশ্মি কোনটি?",
+          options: {
+            A: "বেগুনি",
+            B: "নীল",
+            C: "লাল",
+            D: "সবুজ",
+          },
+          correct: "C",
+          explanation:
+            "<p>দৃশ্যমান আলোর বর্ণালিতে, বেগুনি আলোর তরঙ্গদৈর্ঘ্য সর্বনিম্ন এবং তরঙ্গদৈর্ঘ্য বৃদ্ধির সাথে সাথে বর্ণ পরিবর্তিত হয়। **লাল আলোর তরঙ্গদৈর্ঘ্য দৃশ্যমান আলোর বর্ণালিতে সর্বোচ্চ**। এটি প্রায় 647 nm থেকে 700 nm পর্যন্ত বিস্তৃত।</p>",
+        },
+        {
+          id: 94,
+          question:
+            "H-বর্ণালিতে ইলেকট্রনের কোন স্থানান্তরে সৃষ্ট রশ্মি জাল টাকা শনাক্তকরণে ব্যবহৃত হয়?",
+          options: {
+            A: "n₅ → n₁",
+            B: "n₅ → n₂",
+            C: "n₅ → n₃",
+            D: "n₅ → n₄",
+          },
+          correct: "A",
+          explanation:
+            "<p>জাল টাকা শনাক্তকরণে **অতিবেগুনি (UV) রশ্মি** ব্যবহৃত হয়। হাইড্রোজেন বর্ণালিতে, **লিম্যান সিরিজ** এর রেখাগুলো অতিবেগুনি অঞ্চলে উৎপন্ন হয়, যখন ইলেকট্রন উচ্চ শক্তিস্তর থেকে **প্রথম শক্তিস্তরে (n₁ = 1) ফিরে আসে**। যেমন, n₅ → n₁ স্থানান্তরটি লিম্যান সিরিজের অন্তর্ভুক্ত এবং এর ফলে উৎপন্ন রশ্মি UV অঞ্চলের হয়, যা জাল টাকা শনাক্তকরণে ব্যবহৃত ফ্লোরেসেন্ট কালির সাথে মিথস্ক্রিয়া করে।</p>",
+        },
+        {
+          id: 95,
+          question:
+            "230-375 nm তরঙ্গ দৈর্ঘ্যের রশ্মি পাসপোর্ট শনাক্তকরণে মেশিনে ব্যবহৃত হয়।",
+          options: {
+            A: "110-225 nm",
+            B: "80-228 nm",
+            C: "380-365 nm",
+            D: "230-375 nm",
+          },
+          correct: "D",
+          explanation:
+            "<p>**পাসপোর্ট শনাক্তকরণ মেশিনে** নিরাপত্তা বৈশিষ্ট্য যাচাইয়ের জন্য **অতিবেগুনি (UV) রশ্মি** ব্যবহৃত হয়। নির্দিষ্ট ধরনের UV আলোর তরঙ্গদৈর্ঘ্য ব্যবহার করে পাসপোর্টে লুকানো নিরাপত্তা চিহ্ন বা ফ্লোরেসেন্ট চিত্রগুলো দেখা যায়। এর সঠিক তরঙ্গদৈর্ঘ্য পরিসীমা হলো **230-375 nm**। এটি UV-A এবং UV-B অঞ্চলের কিছু অংশকে অন্তর্ভুক্ত করে, যা নিরাপত্তার জন্য ব্যবহৃত বিশেষ কালি বা ফাইবারগুলোকে আলোকিত করে।</p>",
+        },
+        {
+          id: 96,
+          question:
+            "কোন রশ্মি প্রয়োগ করে মস্তিষ্কের রক্তের হিমোগ্লোবিনে শোষিত O₂ এর মাত্রা পরিমাপ করা হয়?",
+          options: {
+            A: "Near-IR",
+            B: "Middle-IR",
+            C: "Far-IR",
+            D: "MRI",
+          },
+          correct: "A",
+          explanation:
+            "<p>**Near-Infrared (Near-IR) রশ্মি** মস্তিষ্কের রক্তের হিমোগ্লোবিনে শোষিত অক্সিজেন (O₂) এর মাত্রা পরিমাপ করতে ব্যবহৃত হয়। এটি **নিয়ার-ইনফ্রারেড স্পেকট্রোস্কপি (NIRS)** নামক কৌশলের মাধ্যমে কাজ করে। নিয়ার-IR রশ্মি টিস্যুতে প্রবেশ করতে পারে এবং অক্সিহিমোগ্লোবিন ও ডিঅক্সিহিমোগ্লোবিন দ্বারা বিভিন্নভাবে শোষিত হয়। এর শোষণ প্যাটার্ন বিশ্লেষণ করে মস্তিষ্কে অক্সিজেনের মাত্রা এবং রক্ত ​​প্রবাহের পরিবর্তন নিরীক্ষণ করা যায়, যা স্নায়বিক গবেষণায় এবং ক্লিনিক্যাল অ্যাপ্লিকেশনে গুরুত্বপূর্ণ।</p>",
+        },
+        {
+          id: 97,
+          question:
+            "রেখা বর্ণালিতে কোন মৌলের তরঙ্গ দৈর্ঘ্য 590 nm হলে মৌলটি হল-",
+          options: {
+            A: "Hg",
+            B: "H",
+            C: "Sr",
+            D: "Na",
+          },
+          correct: "D",
+          explanation:
+            "<p>রেখা বর্ণালিতে প্রতিটি মৌলের একটি নির্দিষ্ট এবং বৈশিষ্ট্যমূলক তরঙ্গদৈর্ঘ্য থাকে, যা সেই মৌলটিকে শনাক্ত করতে সাহায্য করে। **সোডিয়াম (Na)** এর বৈশিষ্ট্যমূলক শিখা বর্ণালির রেখা **589-590 ন্যানোমিটার (nm)** তরঙ্গদৈর্ঘ্যে দেখা যায়, যা উজ্জ্বল সোনালী হলুদ বর্ণ প্রদর্শন করে। এই তরঙ্গদৈর্ঘ্য সোডিয়াম ল্যাম্পেও ব্যবহৃত হয়। তাই, যদি একটি মৌলের রেখা বর্ণালির তরঙ্গদৈর্ঘ্য 590 nm হয়, তাহলে সেটি সম্ভবত সোডিয়াম।</p>",
+        },
+        {
+          id: 98,
+          question: "IR সক্রিয় হওয়ার জন্য একটি অণুতে কি থাকতে হবে?",
+          options: {
+            A: "আয়নিক বন্ধন",
+            B: "উচ্চ ল্যাটিস শক্তি",
+            C: "ডাইপোল মোমেন্ট",
+            D: "কাইরাল কার্বন",
+          },
+          correct: "C",
+          explanation:
+            "<p>**ইনফ্রারেড (IR) বর্ণালিবীক্ষণ** পদ্ধতিতে একটি অণুর IR সক্রিয় হওয়ার জন্য অণুটির একটি **ডাইপোল মোমেন্ট (Dipole moment)** বা ডাইপোল মোমেন্টে পরিবর্তনশীলতা থাকতে হবে। যখন একটি অণু IR রশ্মি শোষণ করে, তখন এর বন্ধনগুলো কম্পিত হয়। যদি এই কম্পনের ফলে অণুর স্থায়ী বা আবিষ্ট ডাইপোল মোমেন্টে পরিবর্তন ঘটে, তবে অণু IR বিকিরণ শোষণ করে এবং IR বর্ণালিতে একটি চূড়া প্রদর্শন করে। যেসব অণুর ডাইপোল মোমেন্টে কোনো পরিবর্তন হয় না (যেমন O₂, N₂, Cl₂), সেগুলো IR নিষ্ক্রিয়।</p>",
+        },
+        {
+          id: 99,
+          question:
+            "রক্তের শ্বেত কণিকা বৃদ্ধির ও রোগ প্রতিরোধের শক্তি বৃদ্ধিতে সহায়তা করে-",
+          options: {
+            A: "Near-IR",
+            B: "Middle-IR",
+            C: "Far-IR",
+            D: "UV",
+          },
+          correct: "C",
+          explanation:
+            "<p>**ফার ইনফ্রারেড (Far-IR) রশ্মি** থেরাপিউটিক ক্ষেত্রে ব্যবহৃত হয় এবং এটি শরীরের স্বাস্থ্য উপকারে অবদান রাখে বলে মনে করা হয়। ফার-IR রশ্মি শরীরের কোষের কার্যকারিতা উন্নত করতে, রক্ত ​​সঞ্চালন বাড়াতে এবং প্রদাহ কমাতে সাহায্য করে। কিছু গবেষণায় দেখা গেছে যে ফার-IR থেরাপি শরীরের রোগ প্রতিরোধ ক্ষমতা বৃদ্ধিতে এবং রক্তের শ্বেত কণিকা (White blood cells) উৎপাদনে সহায়তা করতে পারে।</p>",
+        },
+        {
+          id: 100,
+          question:
+            "ব্যথা উপশম ও স্নায়ুতন্ত্রের পূর্ণগঠনের ক্ষেত্রে ব্যবহৃত রশ্মি কোনটি?",
+          options: {
+            A: "Near-IR",
+            B: "Middle-IR",
+            C: "Far-IR",
+            D: "UV-Ray",
+          },
+          correct: "C",
+          explanation:
+            "<p>**ফার ইনফ্রারেড (Far-IR) রশ্মি** চিকিৎসা ক্ষেত্রে, বিশেষ করে ব্যথা উপশম এবং স্নায়ুতন্ত্রের পূর্ণগঠনে ব্যবহৃত হয়। এটি টিস্যুতে গভীর প্রবেশ করে তাপ উৎপন্ন করে, যা রক্ত ​​সঞ্চালন বাড়ায়, পেশী শিথিল করে, প্রদাহ কমায় এবং কোষের পুনরুজ্জীবনকে উৎসাহিত করে। এই বৈশিষ্ট্যগুলো ব্যথা কমানো এবং ক্ষতিগ্রস্ত স্নায়ু টিস্যুর পুনরুদ্ধারে সহায়ক হতে পারে।</p>",
+        },
+        {
+          id: 101,
+          question: "হাইড্রোজেনের ক্ষেত্রে R এর মান কত?",
+          options: {
+            A: "230 cm⁻¹",
+            B: "560 cm⁻¹",
+            C: "109678 cm⁻¹",
+            D: "1800 cm⁻¹",
+          },
+          correct: "C",
+          explanation:
+            "<p>হাইড্রোজেন পরমাণুর বর্ণালির জন্য রিডবার্গ সমীকরণে (Ū = R<sub>H</sub> × [1/n₁² - 1/n₂²]) ব্যবহৃত **রিডবার্গ ধ্রুবক (R<sub>H</sub>) এর মান 109678 cm⁻¹**। এটি একটি ধ্রুবক মান যা হাইড্রোজেন পরমাণুর বিভিন্ন শক্তিস্তরের মধ্যে ইলেকট্রনের স্থানান্তরের ফলে নির্গত বা শোষিত আলোর তরঙ্গ সংখ্যা গণনা করতে ব্যবহৃত হয়।</p>",
+        },
+        {
+          id: 102,
+          question: "রেখা বর্ণালীর মাধ্যমে-",
+          options: {
+            A: "মৌল শনাক্ত করা যায়",
+            B: "জাল টাকা শনাক্ত করা যায়",
+            C: "রোগ নির্ণয় করা যায়",
+            D: "তরল যৌগ শনাক্ত করা যায়",
+          },
+          correct: "A",
+          explanation:
+            "<p>**রেখা বর্ণালি** (Line spectrum) হলো একটি মৌলের বৈশিষ্ট্যমূলক বর্ণালি, যা সেই মৌলের পরমাণুগুলো যখন উত্তেজিত অবস্থা থেকে নিম্ন শক্তিস্তরে ফিরে আসে তখন নির্দিষ্ট তরঙ্গদৈর্ঘ্যের আলো বিকিরণ করে। প্রতিটি মৌলের নিজস্ব অনন্য রেখা বর্ণালি রয়েছে, যা একটি আঙ্গুলের ছাপের মতো। তাই, রেখা বর্ণালির বিশ্লেষণের মাধ্যমে **মৌল শনাক্ত করা যায়**। এটি উপাদান বিশ্লেষণের একটি মৌলিক পদ্ধতি।</p>",
+        },
+        {
+          id: 103,
+          question: "বেগুনি আলোকের তরঙ্গ দৈর্ঘ্য 400 nm হলে কম্পাঙ্কের মান কত?",
+          options: {
+            A: "7.5 × 10⁻¹ cm⁻¹",
+            B: "7.5 × 10¹¹ Hz",
+            C: "7.5 × 10¹⁴ Hz",
+            D: "2 × 10¹¹ kHz",
+          },
+          correct: "C",
+          explanation:
+            "<p>আলোর গতি (c), তরঙ্গদৈর্ঘ্য (λ) এবং কম্পাঙ্ক (ν) এর মধ্যে সম্পর্ক হলো: c = λν।<br>এখানে, আলোর গতি (c) = 3 × 10⁸ m/s।<br>তরঙ্গদৈর্ঘ্য (λ) = 400 nm = 400 × 10⁻⁹ m = 4 × 10⁻⁷ m।<br>কম্পাঙ্ক (ν) = c / λ<br>ν = (3 × 10⁸ m/s) / (4 × 10⁻⁷ m)<br>ν = (3/4) × 10<sup>(8+7)</sup> Hz<br>ν = 0.75 × 10¹⁵ Hz<br>ν = **7.5 × 10¹⁴ Hz**।</p>",
+        },
+        {
+          id: 104,
+          question: "আসল নোটে কীসের উপস্থিতি UV রশ্মির অনুপ্রভা সৃষ্টি করে?",
+          options: {
+            A: "কম্পিউটার গ্রাফিক্সের প্রয়োগ",
+            B: "জলছাপ",
+            C: "উত্তেজিত পরমাণু",
+            D: "ফ্লোরেসেন্ট ফসফোর কালি",
+          },
+          correct: "D",
+          explanation:
+            "<p>আসল কারেন্সি নোটে জালিয়াতি রোধ করার জন্য বিভিন্ন নিরাপত্তা বৈশিষ্ট্য ব্যবহার করা হয়। এর মধ্যে একটি গুরুত্বপূর্ণ বৈশিষ্ট্য হলো **ফ্লোরেসেন্ট ফসফোর কালি**। যখন UV (অতিবেগুনি) রশ্মি এই কালির উপর ফেলা হয়, তখন কালিটি UV শক্তি শোষণ করে এবং দৃশ্যমান আলো বিকিরণ করে, যার ফলে একটি **অনুপ্রভা (fluorescence)** সৃষ্টি হয়। এই আভা নির্দিষ্ট প্যাটার্নে বা নির্দিষ্ট রঙে দেখা যায়, যা আসল নোটকে জাল নোট থেকে আলাদা করতে সাহায্য করে।</p>",
+        },
+        {
+          id: 105,
+          question: "সবচেয়ে ক্ষুদ্র তরঙ্গ দৈর্ঘ্য কোনটি?",
+          options: {
+            A: "মহাজাগতিক রশ্মি",
+            B: "রঞ্জন রশ্মি",
+            C: "গামা রশ্মি",
+            D: "অতিবেগুনি রশ্মি",
+          },
+          correct: "A",
+          explanation:
+            "<p>তড়িৎচুম্বকীয় বর্ণালির মধ্যে শক্তির ক্রম অনুসারে, শক্তি যত বেশি হয় তরঙ্গদৈর্ঘ্য তত ক্ষুদ্র হয়। এই ক্রমটি হলো: রেডিওওয়েভ < মাইক্রোওয়েভ < ইনফ্রারেড < দৃশ্যমান আলো < অতিবেগুনি < এক্স-রে < গামা রে < মহাজাগতিক রশ্মি (Cosmic rays)।<br>সুতরাং, প্রদত্ত বিকল্পগুলোর মধ্যে **মহাজাগতিক রশ্মি (Cosmic ray)** এর **তরঙ্গদৈর্ঘ্য সবচেয়ে ক্ষুদ্র** এবং শক্তি সর্বাধিক।</p>",
+        },
+        {
+          id: 106,
+          question: "কোন রশ্মিটির শক্তি সর্বাধিক?",
+          options: {
+            A: "গামা",
+            B: "রেডিও ওয়েভ",
+            C: "অবলোহিত",
+            D: "মাইক্রোওয়েভ",
+          },
+          correct: "A",
+          explanation:
+            "<p>তড়িৎচুম্বকীয় বর্ণালিতে রশ্মির শক্তি তার কম্পাঙ্কের সাথে সরাসরি সমানুপাতিক এবং তরঙ্গদৈর্ঘ্যের সাথে ব্যস্তানুপাতিক। অর্থাৎ, তরঙ্গদৈর্ঘ্য যত কম হবে, শক্তি তত বেশি হবে।<br>তড়িৎচুম্বকীয় বর্ণালির ক্রম (কম শক্তি থেকে বেশি শক্তি): রেডিওওয়েভ < মাইক্রোওয়েভ < অবলোহিত < দৃশ্যমান আলো < অতিবেগুনি < রঞ্জন রশ্মি < গামা রশ্মি।<br>প্রদত্ত বিকল্পগুলোর মধ্যে **গামা (Gamma) রশ্মির শক্তি সর্বাধিক** কারণ এর তরঙ্গদৈর্ঘ্য সবচেয়ে কম।</p>",
+        },
+        {
+          id: 107,
+          question: "রক্তের হিমোগ্লোবিনে অক্সিজেন পরিমাপ করা যায়-",
+          options: {
+            A: "FIR",
+            B: "NIR",
+            C: "UV-ray",
+            D: "MRI",
+          },
+          correct: "B",
+          explanation:
+            "<p>**নিয়ার ইনফ্রারেড (NIR) স্পেকট্রোস্কপি** প্রযুক্তি ব্যবহার করে রক্তের হিমোগ্লোবিনে অক্সিজেনের মাত্রা পরিমাপ করা যায়। NIR রশ্মি টিস্যুতে প্রবেশ করে এবং অক্সিহিমোগ্লোবিন (অক্সিজেন-যুক্ত হিমোগ্লোবিন) এবং ডিঅক্সিহিমোগ্লোবিন (অক্সিজেন-মুক্ত হিমোগ্লোবিন) দ্বারা বিভিন্নভাবে শোষিত হয়। এই শোষণের পার্থক্য বিশ্লেষণ করে রক্তের অক্সিজেনের মাত্রা এবং রক্ত ​​প্রবাহের পরিবর্তন নিরীক্ষণ করা সম্ভব হয়।</p>",
+        },
+        {
+          id: 108,
+          question:
+            "হাইড্রোজেন পরমাণুর বর্ণালিতে লাইম্যান সিরিজ সৃষ্টি হয় কোন অঞ্চলে?",
+          options: {
+            A: "অতিবেগুনি",
+            B: "দৃশ্যমান",
+            C: "অবলোহিত",
+            D: "মাইক্রোওয়েভ",
+          },
+          correct: "A",
+          explanation:
+            "<p>হাইড্রোজেন পরমাণুর বর্ণালিতে, যখন ইলেকট্রন উচ্চ শক্তিস্তর থেকে **প্রথম শক্তিস্তরে (n₁ = 1) ফিরে আসে**, তখন **লাইম্যান সিরিজ** গঠিত হয়। এই সিরিজের রেখাগুলো **অতিবেগুনি (Ultraviolet) অঞ্চলে** পাওয়া যায়। এটি হাইড্রোজেন বর্ণালির একটি মৌলিক সিরিজ।</p>",
+        },
+        {
+          id: 109,
+          question:
+            "Ū = RH (1/n₁² - 1/n₂²) সমীকরণে প্যাশ্চেন সিরিজের জন্য n₁ এর ন্যূনতম মান কত?",
+          options: {
+            A: "2",
+            B: "3",
+            C: "4",
+            D: "5",
+          },
+          correct: "B",
+          explanation:
+            "<p>রিডবার্গ সমীকরণে (Ū = R<sub>H</sub> (1/n₁² - 1/n₂²)), **প্যাশ্চেন সিরিজ** এর রেখাগুলো উৎপন্ন হয় যখন ইলেকট্রন উচ্চ শক্তিস্তর (n₂ > n₁) থেকে **তৃতীয় শক্তিস্তরে (n₁ = 3) ফিরে আসে**। তাই, প্যাশ্চেন সিরিজের জন্য n₁ এর ন্যূনতম মান হলো **3**।</p>",
+        },
+        {
+          id: 110,
+          question: "ব্রাকেট সিরিজের ক্ষেত্রে n₂ এর মান কত?",
+          options: {
+            A: "2",
+            B: "3",
+            C: "4",
+            D: "5",
+          },
+          correct: "D",
+          explanation:
+            "<p>রিডবার্গ সমীকরণে (Ū = R<sub>H</sub> (1/n₁² - 1/n₂²)), **ব্রাকেট সিরিজ** এর রেখাগুলো উৎপন্ন হয় যখন ইলেকট্রন উচ্চ শক্তিস্তর (n₂ > n₁) থেকে চতুর্থ শক্তিস্তরে (n₁ = 4) ফিরে আসে। ব্রাকেট সিরিজের জন্য, n₁ = 4। প্রথম রেখাটির জন্য n₂ এর মান হবে n₁ + 1, অর্থাৎ 4+1 = 5। **তাই, ব্রাকেট সিরিজের ক্ষেত্রে n₂ এর ন্যূনতম মান হলো 5** (যখন n₁=4)।</p>",
+        },
+        {
+          id: 111,
+          question:
+            "নিচের কোনটি মস্তিষ্কের টিউমার শনাক্তকরণে সর্বাধিক ব্যবহৃত হয়?",
+          options: {
+            A: "UV",
+            B: "Radio wave",
+            C: "IR",
+            D: "MRI",
+          },
+          correct: "D",
+          explanation:
+            "<p>**MRI (Magnetic Resonance Imaging)** মস্তিষ্কের টিউমার এবং অন্যান্য মস্তিষ্কের অস্বাভাবিকতা শনাক্তকরণে **সর্বাধিক ব্যবহৃত এবং কার্যকর** কৌশল। এটি শক্তিশালী চৌম্বক ক্ষেত্র এবং রেডিও তরঙ্গ ব্যবহার করে মস্তিষ্কের নরম টিস্যুগুলির বিস্তারিত উচ্চ-রেজোলিউশন চিত্র তৈরি করে, যা অন্যান্য ইমেজিং পদ্ধতির চেয়ে বেশি তথ্য প্রদান করে। MRI দ্বারা টিউমারের আকার, অবস্থান এবং প্রসারের বিষয়ে সুনির্দিষ্ট তথ্য পাওয়া যায়।</p>",
+        },
+        {
+          id: 112,
+          question: "MRI এর অর্থ কী?",
+          options: {
+            A: "মডার্ন রেজোনেন্স ইমেজিং",
+            B: "ম্যাগনেটিক রেডিয়েশন ইমেজিং",
+            C: "মলিকুলার রেজোনেন্স ইমেজিং",
+            D: "ম্যাগনেটিক রেজোনেন্স ইমেজিং",
+          },
+          correct: "D",
+          explanation:
+            "<p>**MRI** এর পূর্ণরূপ হলো **ম্যাগনেটিক রেজোনেন্স ইমেজিং (Magnetic Resonance Imaging)**। এটি একটি চিকিৎসা ইমেজিং কৌশল যা শক্তিশালী চৌম্বক ক্ষেত্র এবং রেডিও তরঙ্গ ব্যবহার করে শরীরের অঙ্গ-প্রত্যঙ্গ এবং নরম টিস্যুর বিস্তারিত চিত্র তৈরি করে। MRI তে ক্ষতিকর বিকিরণ ব্যবহার করা হয় না, তাই এটি তুলনামূলকভাবে নিরাপদ।</p>",
+        },
+        {
+          id: 113,
+          question: "পরমাণুর কোন ধর্মের উপর নির্ভর করে NMR?",
+          options: {
+            A: "বৈদ্যুতিক ধর্ম",
+            B: "চৌম্বক ধর্ম",
+            C: "রাসায়নিক ধর্ম",
+            D: "তেজস্ক্রিয় ধর্ম",
+          },
+          correct: "B",
+          explanation:
+            "<p>**NMR (Nuclear Magnetic Resonance) বর্ণালিবীক্ষণ** পদ্ধতিটি পরমাণুর নিউক্লিয়াসের **চৌম্বক ধর্মের** উপর নির্ভর করে। কিছু নির্দিষ্ট নিউক্লিয়াস, যেমন ¹H (প্রোটন) এবং ¹³C, একটি স্পিন (ঘূর্ণন) প্রদর্শন করে যা তাদেরকে ছোট চৌম্বক ক্ষেত্র হিসেবে কাজ করতে দেয়। যখন এই নিউক্লিয়াসগুলোকে একটি শক্তিশালী বাহ্যিক চৌম্বক ক্ষেত্রে রাখা হয় এবং রেডিও তরঙ্গ দ্বারা প্রভাবিত করা হয়, তখন তারা রেজোনেন্সে আসে এবং সংকেত নির্গত করে। এই সংকেতগুলো বিশ্লেষণ করে অণুর গঠন সম্পর্কে তথ্য পাওয়া যায়।</p>",
+        },
+        {
+          id: 114,
+          question: "NMR বর্ণালিমিতির প্রয়োগ নিম্নের কোনটিতে ঘটে?",
+          options: {
+            A: "IR",
+            B: "MRI",
+            C: "X-ray",
+            D: "সিটিস্ক্যান",
+          },
+          correct: "B",
+          explanation:
+            "<p>**NMR (Nuclear Magnetic Resonance) বর্ণালিমিতি** এর মূলনীতি চিকিৎসা ক্ষেত্রে **MRI (Magnetic Resonance Imaging)** যন্ত্রে ব্যবহৃত হয়। MRI যন্ত্র মানুষের শরীরের ভেতরের অঙ্গ-প্রত্যঙ্গের বিস্তারিত চিত্র তৈরি করতে NMR-এর চৌম্বকীয় রেজোনেন্স ঘটনাকে কাজে লাগায়। এটি অণুজীবের নিউক্লিয়াসের চৌম্বকীয় বৈশিষ্ট্য ব্যবহার করে চিত্র তৈরি করে এবং এতে ক্ষতিকর বিকিরণ থাকে না।</p>",
+        },
+        {
+          id: 115,
+          question: "বর্ণালিমিতিক বিশ্লেষণ কোনটি?",
+          options: {
+            A: "HPLC",
+            B: "NMR",
+            C: "GPC",
+            D: "TGA",
+          },
+          correct: "B",
+          explanation:
+            "<p>**NMR (Nuclear Magnetic Resonance)** হলো এক ধরনের **বর্ণালিমিতিক বিশ্লেষণ (Spectroscopic analysis)** পদ্ধতি। বর্ণালিমিতি হলো আলো বা অন্যান্য তড়িৎচুম্বকীয় বিকিরণের সাথে পদার্থের মিথস্ক্রিয়া অধ্যয়ন করার একটি কৌশল, যা পদার্থের গঠন এবং রাসায়নিক বৈশিষ্ট্য সম্পর্কে তথ্য প্রদান করে। HPLC (High-Performance Liquid Chromatography) এবং GPC (Gel Permeation Chromatography) হলো ক্রোমাটোগ্রাফিক পৃথকীকরণ পদ্ধতি, এবং TGA (Thermogravimetric Analysis) হলো একটি তাপীয় বিশ্লেষণ পদ্ধতি।</p>",
+        },
+        {
+          id: 116,
+          question: "নিচের কোন নিউক্লিয়াসটি NMR সক্রিয়?",
+          options: {
+            A: "¹⁶O",
+            B: "¹²C",
+            C: "³²S",
+            D: "¹H",
+          },
+          correct: "D",
+          explanation:
+            "<p>**NMR (Nuclear Magnetic Resonance) সক্রিয়** নিউক্লিয়াস হলো যাদের নিউক্লিয়ার স্পিন (nuclear spin) শূন্য নয়। স্পিন কোয়ান্টাম সংখ্যা I > 0 হলে সেই নিউক্লিয়াস NMR সক্রিয় হয়।<br>• ¹⁶O এর I = 0 (NMR নিষ্ক্রিয়)<br>• ¹²C এর I = 0 (NMR নিষ্ক্রিয়)<br>• ³²S এর I = 0 (NMR নিষ্ক্রিয়)<br>• **¹H (প্রোটন) এর I = 1/2 (NMR সক্রিয়)**<br>অতএব, হাইড্রোজেন (¹H) নিউক্লিয়াস NMR সক্রিয় এবং এটি জৈব রসায়নে যৌগ সনাক্তকরণে ব্যাপকভাবে ব্যবহৃত হয়।</p>",
+        },
+        {
+          id: 117,
+          question:
+            "MRI যন্ত্রের সাহায্যে মানবদেহের রোগ নির্ণয়ে কোন মৌলটির ভূমিকা রয়েছে?",
+          options: {
+            A: "হাইড্রোজেন",
+            B: "অক্সিজেন",
+            C: "নিয়ন",
+            D: "সিলিকন",
+          },
+          correct: "A",
+          explanation:
+            "<p>**MRI (Magnetic Resonance Imaging)** যন্ত্রের সাহায্যে মানবদেহের রোগ নির্ণয়ে **হাইড্রোজেন (Hydrogen)** মৌলটির নিউক্লিয়াস (প্রোটন) গুরুত্বপূর্ণ ভূমিকা পালন করে। মানবদেহে প্রচুর পরিমাণে পানি এবং চর্বি থাকে, যেখানে হাইড্রোজেন পরমাণু বিদ্যমান। MRI যন্ত্র শক্তিশালী চৌম্বক ক্ষেত্র ব্যবহার করে এই হাইড্রোজেন পরমাণুগুলোর প্রোটনগুলোকে নির্দিষ্ট দিকে সারিবদ্ধ করে এবং রেডিও তরঙ্গ প্রয়োগ করে তাদের রেজোনেন্স ঘটায়। প্রোটনগুলো থেকে নির্গত সংকেত বিশ্লেষণ করে শরীরের নরম টিস্যুগুলির বিস্তারিত চিত্র তৈরি করা হয়।</p>",
+        },
+        {
+          id: 118,
+          question: "নিচের কোনটিতে ক্ষতিকর রশ্মির কোন ঝুঁকি থাকে না?",
+          options: {
+            A: "MRI",
+            B: "X-ray",
+            C: "CAT",
+            D: "CT",
+          },
+          correct: "A",
+          explanation:
+            "<p>**MRI (Magnetic Resonance Imaging)** হলো একটি চিকিৎসা ইমেজিং কৌশল যেখানে **কোনো ক্ষতিকর আয়নাইজিং বিকিরণ (যেমন X-ray) ব্যবহার করা হয় না**। এটি শক্তিশালী চৌম্বক ক্ষেত্র এবং রেডিও তরঙ্গ ব্যবহার করে শরীরের ভেতরের অঙ্গ-প্রত্যঙ্গের চিত্র তৈরি করে। অন্যদিকে, X-ray, CAT (Computed Axial Tomography), এবং CT (Computed Tomography) স্ক্যানগুলো এক্স-রে ব্যবহার করে, যা আয়নাইজিং বিকিরণ এবং এর সাথে সংশ্লিষ্ট কিছু ঝুঁকি রয়েছে। তাই MRI তুলনামূলকভাবে নিরাপদ।</p>",
+        },
+        {
+          id: 119,
+          question: "নিচের কোনটি নেসলার বিকারক?",
+          options: {
+            A: "পটাশিয়াম মারকিউরিক আয়োডাইড",
+            B: "সোডিয়াম মারকিউরিক আয়োডাইড",
+            C: "জিংক মারকিউরিক আয়োডাইড",
+            D: "ক্যালসিয়াম মারকিউরিক আয়োডাইড",
+          },
+          correct: "A",
+          explanation:
+            "<p>**নেসলার বিকারক** হলো পটাশিয়াম টেট্রাআয়োডোমারকিউরেট(II) এর ক্ষারীয় দ্রবণ। এর রাসায়নিক নাম হলো **পটাশিয়াম মারকিউরিক আয়োডাইড** (K₂[HgI₄])। এটি অ্যামোনিয়া এবং অ্যামোনিয়াম আয়ন শনাক্তকরণের জন্য একটি অত্যন্ত সংবেদনশীল বিকারক, যা বাদামী বা হলুদাভ-বাদামী অধঃক্ষেপ উৎপন্ন করে।</p>",
+        },
+        {
+          id: 120,
+          question:
+            "Cr(OH)₃, Cu(OH)₂, Zn(OH)₂ এবং Co(OH)₂ অধঃক্ষেপ সমূহের রং এর ক্রম হলো-",
+          options: {
+            A: "Green, Blue, Pink and White",
+            B: "Blue, Pink, White and Green",
+            C: "Green, Blue, White and Pink",
+            D: "Blue, Green, White and Pink",
+          },
+          correct: "C",
+          explanation:
+            "<p>বিভিন্ন ধাতব হাইড্রক্সাইড অধঃক্ষেপের বৈশিষ্ট্যমূলক রঙ রয়েছে, যা তাদের শনাক্তকরণে সহায়ক। <br>• **Cr(OH)₃**: ক্রোমিয়াম(III) হাইড্রক্সাইড একটি **সবুজ** (Green) রঙের জেলাটিনাস অধঃক্ষেপ। <br>• **Cu(OH)₂**: কপার(II) হাইড্রক্সাইড একটি **নীল** (Blue) রঙের অধঃক্ষেপ। <br>• **Zn(OH)₂**: জিংক হাইড্রক্সাইড একটি **সাদা** (White) রঙের জেলাটিনাস অধঃক্ষেপ। <br>• **Co(OH)₂**: কোবাল্ট(II) হাইড্রক্সাইড একটি **গোলাপি** (Pink) বা লালচে গোলাপী রঙের অধঃক্ষেপ। <br>সুতরাং, ক্রমটি হলো: সবুজ, নীল, সাদা এবং গোলাপি।</p>",
+        },
+        {
+          id: 121,
+          question:
+            "নিম্নের কোন আয়নটিকে অম্লীয় মাধ্যমে সালফাইড হিসেবে অধঃক্ষিপ্ত করা যায় না?",
+          options: {
+            A: "Sb³⁺",
+            B: "Sn²⁺",
+            C: "Ni²⁺",
+            D: "As³⁺",
+          },
+          correct: "C",
+          explanation:
+            "<p>গুণগত বিশ্লেষণে ক্যাটায়নগুলোকে বিভিন্ন গ্রুপে ভাগ করা হয় এবং নির্দিষ্ট বিকারক দিয়ে অধঃক্ষিপ্ত করা হয়। গ্রুপ II ক্যাটায়নগুলো (যেমন Sb³⁺, Sn²⁺, As³⁺) অম্লীয় মাধ্যমে হাইড্রোজেন সালফাইড (H₂S) দ্বারা সালফাইড রূপে অধঃক্ষিপ্ত হয়। অন্যদিকে, গ্রুপ IV ক্যাটায়নগুলো (যেমন Ni²⁺, Co²⁺, Mn²⁺, Zn²⁺) ক্ষারীয় মাধ্যমে H₂S দ্বারা সালফাইড রূপে অধঃক্ষিপ্ত হয়। তাই, **Ni²⁺ আয়নকে অম্লীয় মাধ্যমে সালফাইড হিসেবে অধঃক্ষিপ্ত করা যায় না**।</p>",
+        },
+        {
+          id: 122,
+          question: "অম্লীয় দ্রবণে H₂S যোগ করলে কোনটির অধঃক্ষেপ পড়বে না?",
+          options: {
+            A: "Hg²⁺",
+            B: "Ca²⁺",
+            C: "Bi³⁺",
+            D: "Fe³⁺",
+          },
+          correct: "D",
+          explanation:
+            "<p>অম্লীয় মাধ্যমে হাইড্রোজেন সালফাইড (H₂S) গ্যাস চালনা করলে গ্রুপ II ক্যাটায়নগুলো (যেমন Hg²⁺, Bi³⁺) সালফাইড রূপে অধঃক্ষিপ্ত হয়। Fe³⁺ আয়ন অম্লীয় মাধ্যমে H₂S দ্বারা সালফাইড রূপে অধঃক্ষিপ্ত হয় না। সাধারণত Fe³⁺ আয়নকে ক্ষারীয় মাধ্যমে হাইড্রক্সাইড হিসেবে অধঃক্ষিপ্ত করা হয়, বা Fe²⁺ হিসেবে সালফাইড হিসেবে অধঃক্ষিপ্ত করা হয়। Ca²⁺ আয়ন হলো গ্রুপ V ক্যাটায়ন, যা অম্লীয় মাধ্যমে H₂S দ্বারা অধঃক্ষিপ্ত হয় না। প্রশ্নপত্রে অপশনে ভুল ছিল, তবে **Fe³⁺** হল সঠিক উত্তর কারণ এটি অম্লীয় মাধ্যমে H₂S দ্বারা অধঃক্ষিপ্ত হয় না।</p>",
+        },
+        {
+          id: 123,
+          question:
+            "জলীয় দ্রবণে Al³⁺ আয়ন শনাক্তকরণে নিম্নের কোন বিকারকটি ব্যবহৃত হয়?",
+          options: {
+            A: "HCl",
+            B: "NH₄OH",
+            C: "FeSO₄",
+            D: "AgNO₃",
+          },
+          correct: "B",
+          explanation:
+            "<p>**অ্যামোনিয়াম হাইড্রক্সাইড (NH₄OH)** দ্রবণ ব্যবহার করে **অ্যালুমিনিয়াম আয়ন (Al³⁺)** শনাক্ত করা হয়। Al³⁺ আয়নের দ্রবণে NH₄OH যোগ করলে সাদা, জেলাটিনাস (জেলি সদৃশ) অ্যালুমিনিয়াম হাইড্রক্সাইড (Al(OH)₃) এর অধঃক্ষেপ পড়ে। এই অধঃক্ষেপ অতিরিক্ত অ্যামোনিয়াম হাইড্রক্সাইডে অদ্রবণীয় থাকে, যা অ্যালুমিনিয়াম আয়ন শনাক্তকরণের একটি গুরুত্বপূর্ণ পরীক্ষা।</p>",
+        },
+      ];
+
+      const totalQuestions = questions.length;
+      let timeLeft = Math.floor(totalQuestions / 2) * 60;
+      const timerElement = document.getElementById("timer");
+      let timerInterval;
+
+      function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.innerText = `${toBengaliNumber(
+          minutes
+        )} মিনিট ${toBengaliNumber(seconds)} সেকেন্ড`;
+
+        if (timeLeft > 0) {
+          timeLeft--;
+        } else {
+          stopTimer();
+          confirmSubmit();
+        }
+      }
+
+      function startTimer() {
+        console.log("Starting timer");
+        timerElement.innerText = `${toBengaliNumber(
+          Math.floor(timeLeft / 60)
+        )} মিনিট ${toBengaliNumber(timeLeft % 60)} সেকেন্ড`;
+        timerInterval = setInterval(updateTimer, 1000);
+      }
+
+      function stopTimer() {
+        clearInterval(timerInterval);
+        console.log("Timer stopped");
+      }
+
+      function toBengaliNumber(num) {
+        const bengaliDigits = [
+          "০",
+          "১",
+          "২",
+          "৩",
+          "৪",
+          "৫",
+          "৬",
+          "৭",
+          "৮",
+          "৯",
+        ];
+        let numStr = num.toString();
+
+        let isNegative = num < 0;
+        if (isNegative) {
+          numStr = numStr.substring(1);
+        }
+
+        if (numStr.includes(".")) {
+          let [integerPart, decimalPart] = numStr.split(".");
+          let integerBengali = integerPart
+            .split("")
+            .map((digit) => bengaliDigits[parseInt(digit)])
+            .join("");
+          let decimalBengali = decimalPart
+            .split("")
+            .map((digit) => bengaliDigits[parseInt(digit)])
+            .join("");
+          return (
+            (isNegative ? "−" : "") + integerBengali + "." + decimalBengali
+          );
+        } else {
+          let integerBengali = numStr
+            .split("")
+            .map((digit) => bengaliDigits[parseInt(digit)])
+            .join("");
+          return (isNegative ? "−" : "") + integerBengali;
+        }
+      }
+
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
+      function generateQuestions() {
+        console.log("Generating questions");
+        const examContainer = document.querySelector("#exam");
+        if (!examContainer) {
+          console.error("Exam container (#exam) not found!");
+          return;
+        }
+        examContainer.innerHTML = "";
+        console.log("Questions array:", questions);
+        const shuffledQuestions = shuffleArray([...questions]);
+        shuffledQuestions.forEach((question, index) => {
+          console.log(`Generating question ${index + 1}:`, question);
+          const questionDiv = document.createElement("div");
+          questionDiv.classList.add("question-container");
+          questionDiv.setAttribute("data-question", question.id);
+          questionDiv.setAttribute("data-correct", question.correct);
+
+          let optionsHTML = "";
+          for (let option in question.options) {
+            optionsHTML += `
+                                  <label class="option" data-option="${option}">
+                                    <div class="circle">${option}</div>
+                                    <span class="option-text">${question.options[option]}</span>
+                                  </label>
+                                `;
+          }
+
+          const explanationHTML = question.explanation
+            ? `<div class="explanation-dropdown">
+                                     <button class="explanation-btn">ব্যাখ্যা দেখো</button>
+                                     <div class="explanation-content">
+                                       <div class="explanation-label">ব্যাখ্যা:</div>
+                                       ${question.explanation}
+                                     </div>
+                                   </div>`
+            : "";
+
+          questionDiv.innerHTML = `
+                                <p class="question-label">${index + 1}. ${
+            question.question
+          }</p>
+                                <div class="options">
+                                  ${optionsHTML}
+                                </div>
+                                ${explanationHTML}
+                              `;
+          examContainer.appendChild(questionDiv);
+          console.log(`Appended question ${index + 1} to exam container`);
+        });
+
+        const questionContainers = document.querySelectorAll(
+          ".question-container"
+        );
+        console.log(`Found ${questionContainers.length} question containers`);
+        questionContainers.forEach((container, idx) => {
+          console.log(`Setting question ${idx + 1} to visible`);
+          container.style.display = "block";
+        });
+
+        document.querySelectorAll(".option").forEach((option) => {
+          option.addEventListener(
+            "click",
+            function (e) {
+              e.preventDefault();
+              const parent = this.closest(".question-container");
+              if (parent.classList.contains("locked")) return;
+              parent.classList.add("locked");
+              parent.querySelectorAll(".option").forEach((el) => {
+                if (el !== this) {
+                  el.style.pointerEvents = "none";
+                  el.style.cursor = "default";
+                }
+                el.classList.remove("selected");
+              });
+              this.classList.add("selected");
+              console.log(
+                `Option selected for question ${parent.getAttribute(
+                  "data-question"
+                )}: ${this.getAttribute("data-option")}`
+              );
+            },
+            { once: true }
+          );
+        });
+
+        document.querySelectorAll(".explanation-btn").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const content = this.nextElementSibling;
+            content.classList.toggle("visible");
+            this.classList.toggle("active");
+            console.log("Toggled explanation visibility");
+          });
+        });
+
+        const examInfo = document.getElementById("exam-info");
+        if (examInfo) {
+          examInfo.innerText = `পূর্ণ নম্বরঃ ${toBengaliNumber(
+            totalQuestions
+          )}`;
+          console.log("Exam info updated");
+        } else {
+          console.error("Exam info element not found!");
+        }
+      }
+
+      function initializeChart() {
+        console.log("Initializing chart");
+        const ctx = document.getElementById("scoreChart").getContext("2d");
+        chartInstance = new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: ["ঠিক উত্তর", "ভুল উত্তর", "অনুত্তরিত"],
+            datasets: [
+              {
+                data: [0, 0, 0],
+                backgroundColor: ["#34c759", "#ff3b30", "#007aff"],
+                borderColor: "#fff",
+                borderWidth: 2,
+                hoverOffset: 10,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "10%",
+            layout: {
+              padding: 10,
+            },
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  font: {
+                    family: '"Hind Siliguri", sans-serif',
+                    size: 13,
+                    weight: "bold",
+                  },
+                  color: "#333",
+                  padding: 12,
+                  boxWidth: 14,
+                  generateLabels: (chart) => {
+                    const data = chart.data;
+                    return data.labels.map((label, i) => ({
+                      text: label,
+                      font: {
+                        family: '"Hind Siliguri", sans-serif',
+                      },
+                      fillStyle: data.datasets[0].backgroundColor[i],
+                      hidden: !chart.getDataVisibility(i),
+                      index: i,
+                    }));
+                  },
+                },
+              },
+              tooltip: {
+                backgroundColor: "rgba(0, 0, 0, 0.9)",
+                cornerRadius: 6,
+                titleFont: {
+                  family: '"Hind Siliguri", sans-serif',
+                  size: 14,
+                  weight: "bold",
+                },
+                bodyFont: {
+                  family: '"Hind Siliguri", sans-serif',
+                  size: 13,
+                },
+                padding: 10,
+                boxPadding: 5,
+              },
+            },
+            animation: {
+              animateScale: true,
+              animateRotate: true,
+              duration: 1000,
+              easing: "easeOutQuart",
+            },
+            elements: {
+              arc: {
+                borderRadius: 8,
+              },
+            },
+            onClick: (e, elements) => {
+              if (elements.length > 0) {
+                const index = elements[0].index;
+                const filter = ["correct", "wrong", "unanswered"][index];
+                filterQuestions(filter);
+              } else {
+                filterQuestions("all");
+              }
+            },
+          },
+        });
+        console.log("Chart initialized");
+      }
+
+      function filterQuestions(type) {
+        console.log(`Filtering questions by type: ${type}`);
+        document.querySelectorAll(".question-container").forEach((question) => {
+          const status = question.getAttribute("data-status");
+          if (type === "all" || status === type) {
+            question.style.display = "block";
+          } else {
+            question.style.display = "none";
+          }
+        });
+      }
+
+      function showConfirmPopup() {
+        console.log("Showing confirm popup");
+        document.getElementById("confirmPopup").style.display = "block";
+      }
+
+      function autoSubmitScore() {
+        console.log("Auto-submitting score");
+        stopTimer();
+        let score = 0,
+          total = questions.length,
+          answered = 0,
+          correct = 0,
+          wrong = 0,
+          unanswered = 0;
+
+        document.querySelectorAll(".question-container").forEach((question) => {
+          let correctAnswer = question.getAttribute("data-correct");
+          let selectedOption = question.querySelector(".option.selected");
+
+          if (selectedOption) {
+            answered++;
+            let chosenAnswer = selectedOption.getAttribute("data-option");
+            if (chosenAnswer === correctAnswer) {
+              score += 1;
+              correct++;
+              question.setAttribute("data-status", "correct");
+            } else {
+              score -= 0.25;
+              wrong++;
+              question.setAttribute("data-status", "wrong");
+            }
+          } else {
+            unanswered++;
+            question.setAttribute("data-status", "unanswered");
+          }
+        });
+
+        const userID = sessionStorage.getItem("userID") || "anonymous";
+        const formData = new FormData();
+        formData.append("userID", userID);
+        formData.append("finalScore", score.toFixed(2));
+        formData.append("correctAnswers", correct);
+        formData.append("wrongAnswers", wrong);
+        formData.append("unanswered", unanswered);
+
+        const url = "https://formspree.io/f/xpwy";
+        navigator.sendBeacon(url, formData);
+        console.log("Auto-submission sent via sendBeacon for userID:", userID);
+      }
+
+      function confirmSubmit() {
+        console.log("Confirming submission");
+        document.getElementById("confirmPopup").style.display = "none";
+        stopTimer();
+        let score = 0,
+          total = questions.length,
+          answered = 0,
+          correct = 0,
+          wrong = 0,
+          unanswered = 0;
+
+        document
+          .querySelectorAll(".question-container")
+          .forEach((question, index) => {
+            let correctAnswer = question.getAttribute("data-correct");
+            let selectedOption = question.querySelector(".option.selected");
+
+            if (selectedOption) {
+              answered++;
+              let chosenAnswer = selectedOption.getAttribute("data-option");
+              if (chosenAnswer === correctAnswer) {
+                selectedOption
+                  .querySelector(".option-text")
+                  .classList.add("correct-text");
+                score += 1;
+                correct++;
+                question.setAttribute("data-status", "correct");
+              } else {
+                selectedOption
+                  .querySelector(".option-text")
+                  .classList.add("incorrect-text");
+                question
+                  .querySelector(
+                    `[data-option="${correctAnswer}"] .option-text`
+                  )
+                  .classList.add("correct-text");
+                score -= 0.25;
+                wrong++;
+                question.setAttribute("data-status", "wrong");
+              }
+            } else {
+              question
+                .querySelector(`[data-option="${correctAnswer}"] .option-text`)
+                .classList.add("unattempted-text");
+              unanswered++;
+              question.setAttribute("data-status", "unanswered");
+            }
+            question.style.display = "block";
+
+            const explanationDropdown = question.querySelector(
+              ".explanation-dropdown"
+            );
+            if (explanationDropdown) {
+              explanationDropdown.classList.add("visible");
+            }
+          });
+
+        const chartContainer = document.querySelector(".chart-container");
+        chartContainer.classList.add("visible");
+        if (!chartInstance) {
+          initializeChart();
+        }
+        chartInstance.data.datasets[0].data = [correct, wrong, unanswered];
+        chartInstance.update();
+        console.log("Chart updated with data:", [correct, wrong, unanswered]);
+
+        const userID = sessionStorage.getItem("userID") || "anonymous";
+        document.getElementById("totalQuestions").innerText =
+          toBengaliNumber(total);
+        document.getElementById("answered").innerText =
+          toBengaliNumber(answered);
+        document.getElementById("correctAnswers").innerText =
+          toBengaliNumber(correct);
+        document.getElementById("wrongAnswers").innerText =
+          toBengaliNumber(wrong);
+        document.getElementById("unanswered").innerText =
+          toBengaliNumber(unanswered);
+        document.getElementById("finalScore").innerText = toBengaliNumber(
+          score.toFixed(2)
+        );
+
+        document.getElementById("formUserID").value = userID;
+        document.getElementById("formFinalScore").value = score.toFixed(2);
+        document.getElementById("formCorrectAnswers").value = correct;
+        document.getElementById("formWrongAnswers").value = wrong;
+        document.getElementById("formUnanswered").value = unanswered;
+
+        document.getElementById("submitBtn").style.display = "none";
+
+        document.getElementById("scorePopup").style.display = "block";
+
+        const form = document.getElementById("scoreForm");
+        fetch(form.action, {
+          method: "POST",
+          body: new FormData(form),
+          headers: {
+            Accept: "application/json",
+          },
+        })
+          .then((response) => {
+            if (response.ok) {
+              console.log("Form submitted successfully");
+              form.reset();
+            } else {
+              console.error("Form submission failed:", response.statusText);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+
+      function cancelSubmit() {
+        console.log("Canceling submission");
+        document.getElementById("confirmPopup").style.display = "none";
+      }
+
+      document
+        .getElementById("submitBtn")
+        .addEventListener("click", function () {
+          console.log("Submit button clicked");
+          showConfirmPopup();
+        });
+
+      function closePopup() {
+        console.log("Closing score popup");
+        const scorePopup = document.getElementById("scorePopup");
+        scorePopup.classList.add("slide-out");
+        setTimeout(() => {
+          scorePopup.style.display = "none";
+          scorePopup.classList.remove("slide-out");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 500);
+      }
+
+      document
+        .getElementById("scoreForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          console.log("Score form submitted");
+          closePopup();
+        });
+    </script>
+  </body>
+</html>
